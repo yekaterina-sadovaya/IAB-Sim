@@ -41,26 +41,10 @@ def save_data(per_packet_throughput, packet_delay, num_active_UEs, number_of_hop
 
     print('saving data...')
 
-    folder = 'res_' + gl.UE_mobility_pattern + '_' + gl.scheduler + '/'
-
     if gl.frame_division_policy == '50/50':
         frame_coeff = '50'
     else:
         frame_coeff = gl.frame_division_policy
-
-    if gl.frame_division_policy == 'OPT':
-        if gl.use_average is True:
-            channel_avg = '_AVG_'
-        else:
-            channel_avg = '_NOAVG_'
-
-        # save true optimal continuous values
-        data_opt = dict(sim_time_s=st.simulation_time_s,
-                        opt_weights=st.optimal_weights,
-                        trans_time=st.time_transmitted,
-                        assoc_points=st.closest_bs_indices)
-        with open(folder + 'opt_' + frame_coeff + channel_avg + str(gl.SIM_SEED) + '.pickle', 'wb') as handle:
-            pickle.dump(data_opt, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     data = dict(throughput_per_packet_DL=per_packet_throughput['DL'],
                 throughput_per_packet_UL=per_packet_throughput['UL'],
@@ -74,6 +58,23 @@ def save_data(per_packet_throughput, packet_delay, num_active_UEs, number_of_hop
                 active_ues_UL=num_active_UEs['UL'],
                 optimal_rate=st.optimal_throughput)
 
-    with open(folder + 'achieved_' + frame_coeff + '_' + str(gl.FTP_parameter_lambda_UL) + '_' +
-              str(gl.FTP_parameter_lambda_DL) + '_' + str(gl.SIM_SEED) + '.pickle', 'wb') as handle:
-        pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    if gl.frame_division_policy == 'OPT':
+        if gl.use_average is True:
+            channel_avg = '_AVG_'
+        else:
+            channel_avg = '_NOAVG_'
+
+        # save true optimal continuous values
+        data_opt = dict(sim_time_s=st.simulation_time_s,
+                        opt_weights=st.optimal_weights,
+                        trans_time=st.time_transmitted,
+                        assoc_points=st.closest_bs_indices)
+        with open(frame_coeff + channel_avg + str(gl.SIM_SEED) + '.pickle', 'wb') as handle:
+            pickle.dump(data_opt, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+        with open('achieved_' + str(gl.SIM_SEED) + '.pickle', 'wb') as handle:
+            pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    else:
+        with open('res_' + frame_coeff + '_' + str(gl.FTP_parameter_lambda_UL) + '_' +
+                  str(gl.FTP_parameter_lambda_DL) + '_' + str(gl.SIM_SEED) + '.pickle', 'wb') as handle:
+            pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)

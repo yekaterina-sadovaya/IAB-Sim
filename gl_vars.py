@@ -6,11 +6,9 @@ class GL_container_class:
         self.SIM_SEED = 1
 
         # 1 simulation tic corresponds to a transmission of half (or another coefficient) of the frame (UL or DL)
-        self.time_stop_tics = 120000
+        self.time_stop_tics = 10
         self.carrier_frequency_Hz = 28e9
         self.cell_radius_m = 2000
-        # 1 Mbyte = 1e6 byte
-        self.file_size_bytes = 10*1.995*1e6
         # Max IP packet size for 5G = 1500
         self.ip_packet_size_bytes = 8424/8
         self.n_UEs = 30
@@ -70,6 +68,9 @@ class GL_container_class:
         self.target_BLER = 0.1
         # choose from 'FTP' or 'full'
         self.traffic = 'full'
+        # file size for full-buffer traffic should be set to a large number, which will not be all transmitted
+        # 1 Mbyte = 1e6 byte (standard value for FTP traffic models)
+        self.file_size_bytes = 10*1.995*1e6
 
         # RA_division flag sets, which resources are divided; possible values are 'time', 'freq', 'time-freq'
         self.RA_division = 'time'
