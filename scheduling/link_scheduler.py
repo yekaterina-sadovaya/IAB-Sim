@@ -223,22 +223,3 @@ class LinkSchedulerOptimal(LinkScheduler):
 
                         st.optimal_weights['D'][k, 0] = y_b1_per_ue
                         st.optimal_weights['D'][k, 3] = y_1b_per_ue
-
-        # if st.simulation_time_tics % 800 == 0:
-        #     if 'h' in locals():
-        #         save_intermediate_stats(h)
-        #     else:
-        #         save_intermediate_stats()
-
-
-def save_intermediate_stats(h=None):
-    import pickle
-    intermediate_packets_number = st.packets_counter
-    cur_tic = st.simulation_time_tics
-    data = dict(packets_number=intermediate_packets_number,
-                time=st.simulation_time_s,
-                optimal_rate=h)
-    folder = 'C:/Users/sadov/OneDrive/Документы/Работа/Intel/2021 IAB/Packet-sim-git/Data/'
-    with open(folder+'40kmph_intermediate_'+str(cur_tic)+'s.pickle', 'wb') as handle:
-        pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
-

@@ -203,9 +203,6 @@ def calc_phy_throughput_FB():
 
         print('UE throughput ' + str(st.perceived_throughput['DL'][ue_number] / 1e6) + ' Mbps')
 
-        # st.packets_counter['DL'][ue_number] = 0
-        # st.packets_counter['UL'][ue_number] = 0
-
 
 def transmit_blocks(link_scheduler, packet_scheduler, OFDM_params, BERs):
     time_fraction_number = link_scheduler.current_state
@@ -355,7 +352,7 @@ def calc_thr_per_subframe(DIR):
     thr_per_subfr = np.array([])
     for ue in range(0, gl.n_UEs):
         if st.bits_tr[DIR][ue] != 0:
-            thr_per_subfr_per_ue = st.bits_tr[DIR][ue] / gl.subframe_duration_s
+            thr_per_subfr_per_ue = st.bits_tr[DIR][ue] / gl.FRAME_DURATION_S
             thr_per_subfr = np.append(thr_per_subfr, thr_per_subfr_per_ue)
             st.bits_tr[DIR][ue] = 0
     return thr_per_subfr

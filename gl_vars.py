@@ -3,6 +3,8 @@ import numpy as np
 
 class GL_container_class:
     def __init__(self):
+        self.SIM_SEED = 1
+
         # 1 simulation tic corresponds to a transmission of half (or another coefficient) of the frame (UL or DL)
         self.time_stop_tics = 120000
         self.carrier_frequency_Hz = 28e9
@@ -32,7 +34,7 @@ class GL_container_class:
         self.DgNB_height = 25
         self.iab_height = 10
         self.UE_height = 1.5
-        # set mobility pattern to RDM or RPGM
+        # set mobility pattern to RDM, RPGM, or stable
         self.UE_mobility_pattern = 'RDM'
         self.UE_min_speed = 0.000082*4      # m/s
         self.UE_average_speed = 0.000084*4  # m/s
@@ -60,10 +62,7 @@ class GL_container_class:
         # OFDM-related parameters
         self.numerology = 3     # default numerology is 0
         self.Bandwidth = 400e6
-
-        # subfr or slot
-        # practically, we cannot divide anything rather then slots
-        self.division_unit = 'slot'
+        self.FRAME_DURATION_S = 10e-3
 
         # The size of code block block in bits
         self.MAX_CB_size_bits = 8424
@@ -78,6 +77,7 @@ class GL_container_class:
         # 50/50, PF, OPT
         self.frame_division_policy = 'OPT'
         # if this flag is enable, average values of spectral efficiencies will be used in the optimization
+        # if disable, instant variables will be used
         self.use_average = True
         # Choose optimization 'MAXMIN' or 'PF'
         self.optimization_type = 'MAXMIN'

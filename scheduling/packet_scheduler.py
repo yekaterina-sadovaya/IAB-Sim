@@ -168,15 +168,9 @@ class Scheduler:
             self.schedules[node_name][DIR] = []
 
             active_ues = link_scheduler.active_ues[DIR]
-            if gl.division_unit == 'slot':
-                symbols_total = np.round(C * 14)
-                # symbols_total = C * 14
-            elif gl.division_unit == 'subfr':
-                time_slots_total = (C * 1e-3) / OFDM_params.RB_time_s
-                time_slots_total = np.round(time_slots_total)
-                symbols_total = time_slots_total * 14
-            else:
-                raise ValueError
+            time_slots_total = (C * gl.FRAME_DURATION_S) / OFDM_params.RB_time_s
+            time_slots_total = np.round(time_slots_total)
+            symbols_total = time_slots_total * 14
             st.symbols_per_ue[time_fraction_number] = symbols_total
 
             if gl.scheduler == 'RR':

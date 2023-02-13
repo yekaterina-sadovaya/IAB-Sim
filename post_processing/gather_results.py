@@ -2,6 +2,7 @@ from stat_container import st
 from gl_vars import gl
 
 import numpy as np
+import pickle
 
 
 def combine_metrics(link_scheduler, tic, TPT, delay, num_active_UE, number_of_hops_DL):
@@ -34,3 +35,45 @@ def combine_metrics(link_scheduler, tic, TPT, delay, num_active_UE, number_of_ho
     st.mean_delay['UL'] = np.array([])
 
     return TPT, delay, num_active_UE, number_of_hops_DL
+
+
+def save_data(per_packet_throughput, packet_delay, num_active_UEs, number_of_hops_DL):
+
+    print('saving data...')
+
+    folder = 'res_' + gl.UE_mobility_pattern + '_' + gl.scheduler + '/'
+
+    if gl.frame_division_policy == '50/50':
+        frame_coeff = '50'
+    else:
+        frame_coeff = gl.frame_division_policy
+
+    if gl.frame_division_policy == 'OPT':
+        if gl.use_average is True:
+            channel_avg = '_AVG_'
+        else:
+            channel_avg = '_NOAVG_'
+
+        # save true optimal continuous values
+        data_opt = dict(sim_time_s=st.simulation_time_s,
+                        opt_weights=st.optimal_weights,
+                        trans_time=st.time_transmitted,
+                        assoc_points=st.closest_bs_indices)
+        with open(folder + 'opt_' + frame_coeff + channel_avg + str(gl.SIM_SEED) + '.pickle', 'wb') as handle:
+            pickle.dump(data_opt, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    data = dict(throughput_per_packet_DL=per_packet_throughput['DL'],
+                throughput_per_packet_UL=per_packet_throughput['UL'],
+                throughput_per_burst_DL=st.perceived_throughput['DL'],
+                throughput_per_burst_UL=st.perceived_throughput['UL'],
+                time_pt=st.time_pt_calculated,
+                delay_DL=packet_delay['DL'],
+                delay_UL=packet_delay['UL'],
+                number_of_hops_DL=number_of_hops_DL,
+                active_ues_DL=num_active_UEs['DL'],
+                active_ues_UL=num_active_UEs['UL'],
+                optimal_rate=st.optimal_throughput)
+
+    with open(folder + 'achieved_' + frame_coeff + '_' + str(gl.FTP_parameter_lambda_UL) + '_' +
+              str(gl.FTP_parameter_lambda_DL) + '_' + str(gl.SIM_SEED) + '.pickle', 'wb') as handle:
+        pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)

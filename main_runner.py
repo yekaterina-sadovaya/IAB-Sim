@@ -7,37 +7,33 @@ from packet.packets_operations import packetize_data, transmit_blocks, calc_phy_
 from phy.abstractions import set_params_OFDM
 from scheduling.link_scheduler import LinkScheduler, LinkSchedulerOptimal
 from scheduling.packet_scheduler import Scheduler
-from library.calc_params import calc_throughput
 from library.random_drop import drop_DgNB, drop_IAB
 from phy.interpolate_ber_curves import load_BER
-from channel.antenna import beam_split
-from post_processing.gather_results import combine_metrics
+from post_processing.gather_results import combine_metrics, save_data
 
 import numpy as np
-import pickle
 import matplotlib.pyplot as plt
 
 plt.style.use('YS_plot_style.mplstyle')
 
-subframe_duration_s = 1e-3
 
-
-def packet_sim(session_intensity, SIM_SEED):
-    gl.FTP_parameter_lambda_DL = session_intensity
-    gl.FTP_parameter_lambda_UL = session_intensity
+def packet_sim():
 
     BER_CURVES = load_BER()
 
-    # Drop the DgNB on the edge
-    drop_DgNB(SIM_SEED)
-    drop_IAB(SIM_SEED)
+    # Drop the DgNB and IAB nodes
+    drop_DgNB(gl.SIM_SEED)
+    drop_IAB(gl.SIM_SEED)
 
     # Calculate parameters, which do not change during the calculations
     OFDM_params = set_params_OFDM(gl.numerology)
-    # periodicity = subframe_duration_s / OFDM_params.RB_time_s
-    periodicity = gl.time_stop_tics
+    if gl.UE_mobility_pattern == 'stable':
+        # periodicity determines the frequency of channel updates
+        periodicity = gl.time_stop_tics
+    else:
+        periodicity = gl.FRAME_DURATION_S / OFDM_params.RB_time_s
 
-    UE_mobility_model = set_mobility_model(SIM_SEED, subframe_duration_s)
+    UE_mobility_model = set_mobility_model(gl.SIM_SEED, gl.FRAME_DURATION_S)
     topology = TopologyCreator(BER_CURVES)
     if gl.frame_division_policy != 'OPT':
         link_scheduler = LinkScheduler()
@@ -48,12 +44,10 @@ def packet_sim(session_intensity, SIM_SEED):
     st.__init__()
 
     # Containers to store data
-    TPT = {'DL': np.array([]), 'UL': np.array([])}
-    delay = {'DL': np.array([]), 'UL': np.array([])}
+    per_packet_throughput = {'DL': np.array([]), 'UL': np.array([])}
+    packet_delay = {'DL': np.array([]), 'UL': np.array([])}
     num_active_UEs = {'DL': np.array([]), 'UL': np.array([])}
     number_of_hops_DL = np.array([])
-
-    SEC_COUNT = 0
 
     for tic in range(0, gl.time_stop_tics):
 
@@ -67,8 +61,8 @@ def packet_sim(session_intensity, SIM_SEED):
 
         if tic == 0:
             # generate traffic (demands) for each UE initially
-            ftp3_traffic('UL', tic, SIM_SEED)
-            ftp3_traffic('DL', tic, SIM_SEED)
+            ftp3_traffic('UL', tic, gl.SIM_SEED)
+            ftp3_traffic('DL', tic, gl.SIM_SEED)
             topology.determine_initial_associations(UE_positions_tr)
             if gl.plot_Flag is True:
                 indices1 = np.where(st.closest_bs_indices == 0)[0]
@@ -109,24 +103,20 @@ def packet_sim(session_intensity, SIM_SEED):
 
                 if np.any(link_scheduler.active_ues['DL']) or np.any(link_scheduler.active_ues['UL']):
                     transmit_blocks(link_scheduler, packet_scheduler, OFDM_params, BER_CURVES)
-                    # thr_per_subframe = calc_thr_per_subframe(link_scheduler.current_state)
 
                 if any(st.mean_throughput['DL']):
-                    # print(link_scheduler.C)
                     st.mean_throughput['DL'] = np.mean(st.mean_throughput['DL'])
                     st.mean_delay['DL'] = np.mean(st.mean_delay['DL'])
 
-                ftp3_traffic('DL', tic, SIM_SEED)
-                ftp3_traffic('UL', tic, SIM_SEED)
+                ftp3_traffic('DL', tic, gl.SIM_SEED)
+                ftp3_traffic('UL', tic, gl.SIM_SEED)
 
-                TPT, delay, num_active_UEs, number_of_hops_DL = \
-                    combine_metrics(link_scheduler, tic, TPT, delay, num_active_UEs, number_of_hops_DL)
-                if gl.division_unit == 'slot':
-                    st.simulation_time_s = st.simulation_time_s + OFDM_params.RB_time_s * C
-                    # st.simulation_time_s = st.simulation_time_s + \
-                    # st.symbols_per_ue[link_scheduler.current_state]*OFDM_params.symbol_duration
-                elif gl.division_unit == 'subfr':
-                    st.simulation_time_s = st.simulation_time_s + subframe_duration_s * C
+                per_packet_throughput, packet_delay, num_active_UEs, number_of_hops_DL = \
+                    combine_metrics(link_scheduler, tic, per_packet_throughput,
+                                    packet_delay, num_active_UEs, number_of_hops_DL)
+
+                # update simulation time
+                st.simulation_time_s = st.simulation_time_s + gl.FRAME_DURATION_S * C
 
                 if tic % gl.channel_update_periodicity_tics == 0:
                     for UE_num, UE_position in enumerate(UE_positions_tr):
@@ -140,60 +130,11 @@ def packet_sim(session_intensity, SIM_SEED):
             else:
                 link_scheduler.current_state += 1
 
-            # if st.simulation_time_tics % 32000 == 0:
-            #     SEC_COUNT = SEC_COUNT + 1
-            #     data_opt = dict(sim_time_s=st.simulation_time_s,
-            #                     opt_weights=st.optimal_weights,
-            #                     trans_time=st.time_transmitted,
-            #                     assoc_points=st.closest_bs_indices)
-            #     print('save data...')
-            #     with open('FB_static2_seed10_'+str(SEC_COUNT)+'s.pickle', 'wb') as handle:
-            #         pickle.dump(data_opt, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
     if gl.traffic == 'full':
         calc_phy_throughput_FB()
 
-    data_opt = dict(sim_time_s=st.simulation_time_s,
-                    opt_weights=st.optimal_weights,
-                    trans_time=st.time_transmitted,
-                    assoc_points=st.closest_bs_indices)
-    print('save data...')
-    if gl.frame_division_policy == '50/50':
-        SF = '50'
-    else:
-        SF = gl.frame_division_policy
-    if gl.scheduler == 'WFQ':
-        SCHD = 'RR'
-    else:
-        SCHD = gl.scheduler
-    if gl.use_average is True:
-        AVG = '_AVG_'
-    else:
-        AVG = '_'
-
-    folder = 'C:/Users/sadov/OneDrive/Документы/Работа/Intel/2021 IAB/Packet-sim-git/Data/PF_R'+str(gl.cell_radius_m)+'m_staticUEs_' + SCHD + '/'
-    with open(folder + 'alloc_FB_static_' + SF + '_' + gl.scheduler + AVG +str(SIM_SEED)+'_'+str(SEC_COUNT)+'s.pickle', 'wb') as handle:
-        pickle.dump(data_opt, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-    data = dict(throughput_per_packet_DL=TPT['DL'],
-                throughput_per_packet_UL=TPT['UL'],
-                throughput_per_burst_DL=st.perceived_throughput['DL'],
-                throughput_per_burst_UL=st.perceived_throughput['UL'],
-                time_pt=st.time_pt_calculated,
-                delay_DL=delay['DL'],
-                delay_UL=delay['UL'],
-                number_of_hops_DL=number_of_hops_DL,
-                active_ues_DL=num_active_UEs['DL'],
-                active_ues_UL=num_active_UEs['UL'],
-                # rsrp_DL=st.rsrp_in_time['DL'],
-                # rsrp_UL=st.rsrp_in_time['UL'],
-                optimal_rate=st.optimal_throughput)
-
-    with open(folder + str(gl.n_IAB)+'_NODE_' + SF + '_' + gl.scheduler + '_INT' + AVG + str(gl.FTP_parameter_lambda_UL) + '_' +
-              str(gl.FTP_parameter_lambda_DL) + '_' + str(SIM_SEED) + '.pickle', 'wb') as handle:
-        pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    save_data(per_packet_throughput, packet_delay, num_active_UEs, number_of_hops_DL)
 
 
 if __name__ == "__main__":
-    # packet_sim(0.1, 8)
-    packet_sim(50, 7)
+    packet_sim()
