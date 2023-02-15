@@ -53,11 +53,11 @@ class TopologyCreator:
         for weighted_path in dist_weights:
             max_values.append(max(weighted_path))
 
-        if gl.multihop_option == 'best_rsrp_maxmin':
+        if gl.ue_associations == 'best_rsrp_maxmin':
             ind = max_values.index(min(max_values))
-        elif gl.multihop_option == 'rand':
+        elif gl.ue_associations == 'rand':
             ind = random.randint(0, len(max_values)-1)
-        elif gl.multihop_option == 'min_hops':
+        elif gl.ue_associations == 'min_hops':
             ind = 0
         else:
             raise ValueError
@@ -83,7 +83,7 @@ class TopologyCreator:
                                                 self.DgNB_IAB_distances, np.zeros([self.bs_positions[1:, :].shape[0],
                                                                                    2]),
                                                 Nant_tx=gl.N_antenna_elements_DgNB,
-                                                Nant_rx=gl.N_antenna_elements_IAB, diversity=gl.antenna_diversity)
+                                                Nant_rx=gl.N_antenna_elements_IAB)
         for i_iab, iab_pos in enumerate(gl.IAB_pos):
 
             current_ids = np.array(range(gl.IAB_pos.shape[0])) != i_iab
@@ -91,7 +91,7 @@ class TopologyCreator:
             self.PL_bw_IAB[i_iab, current_ids] = calc_transmission(gl.IAB_pos[current_ids, :], iab_pos,
                                                  dist_bw_nodes, np.zeros([gl.IAB_pos[1:, :].shape[0], 2]),
                                                  Nant_tx=gl.N_antenna_elements_IAB,
-                                                 Nant_rx=gl.N_antenna_elements_IAB, diversity=gl.antenna_diversity)
+                                                 Nant_rx=gl.N_antenna_elements_IAB)
 
         for i, ue_pos in enumerate(ue_positions):
 
@@ -120,8 +120,7 @@ class TopologyCreator:
 
                 PL, PL_average = calc_transmission([ue_pos], self.bs_positions[st.closest_bs_indices[i, j - 1]],
                                        [st.closest_bs_distances[i, j - 1]], [st.UE_blockage_condition[i, :2]],
-                                       Nant_tx=gl.N_antenna_elements_UE, Nant_rx=n_ant,
-                                       diversity=gl.antenna_diversity)
+                                       Nant_tx=gl.N_antenna_elements_UE, Nant_rx=n_ant)
                 st.PL_in_all_links[node_name][i, j - 1] = PL
                 st.current_rsrp[node_name]['UL'][i, j - 1] = gl.UE_tx_power_dBm - PL - st.noise_power_UL - \
                                                   gl.interference_margin_dB
@@ -174,8 +173,7 @@ class TopologyCreator:
                         PL, PL_average = calc_transmission([ue_pos], self.bs_positions[st.closest_bs_indices[ue_num, 0]],
                                                [st.closest_bs_distances[ue_num, 0]],
                                                [st.UE_blockage_condition[ue_num, :2]],
-                                               Nant_tx=n_ant_tx, Nant_rx=n_ant_rx,
-                                               diversity=gl.antenna_diversity)
+                                               Nant_tx=n_ant_tx, Nant_rx=n_ant_rx)
 
                     elif current_hop != assoc_point and current_hop != 0:
                         first_index = current_hop
@@ -198,6 +196,3 @@ class TopologyCreator:
                         st.current_rsrp_average[node_name][DIR][ue_num, 0] = p_tx - PL_average - noise_power - gl.interference_margin_dB
                         st.PHY_params_average[node_name][DIR][ue_num] = set_params_PHY(st.current_rsrp_average[node_name][DIR][ue_num, 0],
                                                                            self.BERs)
-                    if gl.rsrp_statistics is True and IfFirstHop:
-                        st.rsrp_in_time[DIR][ue_num] = np.append(st.rsrp_in_time[DIR][ue_num],
-                                                                 st.current_rsrp[node_name][DIR][ue_num, 0])

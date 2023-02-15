@@ -10,7 +10,7 @@ ch_params = MP_chan_params_Cluster()
 antenna_downtilt_rad = gl.antenna_downtilt_deg*np.pi/180
 
 
-def calc_transmission(txs, rx, distances, blockage, Nant_tx: int, Nant_rx: int, diversity: bool):
+def calc_transmission(txs, rx, distances, blockage, Nant_tx: int, Nant_rx: int):
 
     class MainTransmission:
         def __init__(self):
@@ -31,22 +31,7 @@ def calc_transmission(txs, rx, distances, blockage, Nant_tx: int, Nant_rx: int, 
         min_distance = distances[tx_index]
         is_blocked = blockage[tx_index]
 
-        if diversity is True:
-
-            rx_diversed = copy.deepcopy(rx)
-            if tx_index != 0 and tx_index == 1:
-                rx_diversed[0] = rx_diversed[0] + tx_index * gl.rx_antenna_diversity_m
-                rx_diversed[1] = rx_diversed[1] + tx_index * gl.rx_antenna_diversity_m
-            elif tx_index != 0 and tx_index == 2:
-                rx_diversed[0] = rx_diversed[0] - tx_index * gl.rx_antenna_diversity_m
-                rx_diversed[1] = rx_diversed[1] - tx_index * gl.rx_antenna_diversity_m
-
-            transmitting_direction0 = rx_diversed - tx_i[0:3]
-            dist = np.linalg.norm(transmitting_direction0)
-            transmitting_direction = transmitting_direction0 / dist
-
-        else:
-            transmitting_direction = (rx - tx_i) / min_distance
+        transmitting_direction = (rx - tx_i) / min_distance
 
         azimuth_angle_tx, zenith_angle_tx, r = cart2sph(transmitting_direction[0], transmitting_direction[1],
                                                       transmitting_direction[2])

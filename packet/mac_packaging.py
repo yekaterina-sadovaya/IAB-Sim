@@ -14,7 +14,7 @@ class packing_params():
     def __init__(self):
         self.MTU = gl.MAX_ARQ_BLOCK
         # this has to be fixed or at least predictable for client relay ot work.
-        self.max_retries = gl.MAX_ARQ_RETRIES
+        self.max_retries = gl.max_ARQ_retries
         # Flag to enable CR-specific packaging logic
         self.cr_enabled = False  # ASSUME FALSE AND DELETE
 

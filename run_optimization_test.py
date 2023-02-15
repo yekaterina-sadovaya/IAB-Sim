@@ -16,7 +16,7 @@ SIM_SEED = 0
 subframe_duration_s = 1e-3
 
 BER_CURVES = load_BER()
-OFDM_params = set_params_OFDM(gl.numerology)
+OFDM_params = set_params_OFDM(gl.numerology_num)
 
 st.__init__()
 UE_mobility_model = set_mobility_model(SIM_SEED, subframe_duration_s)

@@ -7,7 +7,7 @@ from math import log2
 import collections
 import numpy as np
 
-N_BS = np.vstack((gl.DgNB_pos, gl.IAB_pos)).shape[0]
+N_BS = gl.n_IAB + 1
 
 # TBS for Ninfo <= 3824 is defined in Table 5.1.3.2-1 of TS 38.214
 # STABLE VERSION?
@@ -22,7 +22,7 @@ TBS_for_less_than_3824 = np.append(TBS_for_less_than_3824, np.array([2976, 3104,
 def packetize_data(LOG_DIR):
     st.active_UEs[LOG_DIR] = []
     for id_of_UE in range(0, gl.n_UEs):
-        number_of_packets = st.ue_associated_traffic_bytes[LOG_DIR][id_of_UE, 0] / gl.ip_packet_size_bytes
+        number_of_packets = st.ue_associated_traffic_bytes[LOG_DIR][id_of_UE, 0] / gl.packet_size_bytes
         st.ue_associated_traffic_bytes[LOG_DIR][id_of_UE, 0] = 0
         number_of_packets = int(number_of_packets)
         new_packets = []
@@ -31,7 +31,7 @@ def packetize_data(LOG_DIR):
         additional_packets_fb = []
         if number_of_packets != 0:
             for i in range(0, number_of_packets):
-                IP_pkt = TDataPacket(id_of_UE, st.backhaul_routes[id_of_UE][LOG_DIR][-1], gl.ip_packet_size_bytes,
+                IP_pkt = TDataPacket(id_of_UE, st.backhaul_routes[id_of_UE][LOG_DIR][-1], gl.packet_size_bytes,
                                      current_hop=st.backhaul_routes[id_of_UE][LOG_DIR][0])
 
                 if i == 0:
@@ -223,9 +223,9 @@ def transmit_blocks(link_scheduler, packet_scheduler, OFDM_params, BERs):
                     st.packet_traffic[node_name][LINK][DIR][ue_in_TTI].sort(key=lambda x: x.arrival_time, reverse=False)
 
                     transport_block_size = det_block_size(DIR, ue_in_TTI, node_name)
-                    # transport_block_size = 8424
                     # st.TBS[DIR] = np.append(st.TBS[DIR], transport_block_size)
-                    codeblocks_in_TB = transport_block_size / gl.MAX_CB_size_bits
+                    max_codeblock_size_bits = gl.max_codeblock_size_bytes * 8
+                    codeblocks_in_TB = transport_block_size / max_codeblock_size_bits
                     if codeblocks_in_TB < 1:
                         codeblocks_per_UE_in_tti = -1
                     else:
@@ -233,7 +233,6 @@ def transmit_blocks(link_scheduler, packet_scheduler, OFDM_params, BERs):
 
                     if len(st.packet_traffic[node_name][LINK][DIR][ue_in_TTI]) > 0:
 
-                        # for n_CB in range(0, int(codeblocks_per_UE_in_tti)):
                         for n_CB in range(0, int(np.ceil(codeblocks_in_TB))):
 
                             try:
@@ -292,13 +291,13 @@ def transmit_blocks(link_scheduler, packet_scheduler, OFDM_params, BERs):
 
                                     packet_size = st.packet_traffic[node_name][LINK][DIR][ue_in_TTI][pkt_id].size_bytes
 
-                                    if packet_size == gl.ip_packet_size_bytes:
+                                    if packet_size == gl.packet_size_bytes:
                                         # In the following function,
                                         # for whole packets, next hop is assigned or they
                                         # are delivered to the destination
-                                        if gl.traffic == 'FTP':
+                                        if gl.traffic_type == 'FTP':
                                             deliver_packet_FTP(DIR, ue_in_TTI, pkt_id, OFDM_params, TTI)
-                                        elif gl.traffic == 'full':
+                                        elif gl.traffic_type == 'full':
                                             deliver_packet_FB(DIR, ue_in_TTI, pkt_id, OFDM_params, node_name, TTI,
                                                               time_fraction_number, LINK)
 
@@ -325,9 +324,9 @@ def transmit_blocks(link_scheduler, packet_scheduler, OFDM_params, BERs):
                                                 # remove delivered fragments from buffers
                                                 for ff in fragments_numbers[::-1]:
                                                     del st.fragmented_packets[DIR][ue_in_TTI][ff]
-                                                if gl.traffic == 'FTP':
+                                                if gl.traffic_type == 'FTP':
                                                     deliver_packet_FTP(DIR, ue_in_TTI, pkt_id, OFDM_params, TTI)
-                                                elif gl.traffic == 'full':
+                                                elif gl.traffic_type == 'full':
                                                     deliver_packet_FB(DIR, ue_in_TTI, pkt_id, OFDM_params, node_name,
                                                                       TTI, time_fraction_number, LINK)
 

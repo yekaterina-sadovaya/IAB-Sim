@@ -6,10 +6,10 @@ import roundrobin
 import numpy as np
 from math import floor
 
-OFDM_params = set_params_OFDM(gl.numerology)
+OFDM_params = set_params_OFDM(gl.numerology_num)
 number_of_RBs = floor(gl.bandwidth / OFDM_params.SCS_Hz)
 
-N_BS = np.vstack((gl.DgNB_pos, gl.IAB_pos)).shape[0]
+N_BS = gl.n_IAB + 1
 
 
 def find_multipliers(number):
@@ -94,7 +94,7 @@ def WPF_metric(active_ues, symb_total, time_fraction_number, node_name, coeffici
             weight = weight/coefficient_eps
             # compute PF metric
             if np.any(st.past_throughput[DIR][ue]):
-                if gl.traffic == 'FTP':
+                if gl.traffic_type == 'FTP':
                     st.past_throughput[DIR][ue] = \
                         np.mean(st.past_throughput[DIR][ue])
                 WPF_i = estimated_throughput / st.past_throughput[DIR][ue]
@@ -262,11 +262,7 @@ class Scheduler:
                             st.PHY_params[node_name][DIR][ue_id].mod_order * \
                             st.PHY_params[node_name][DIR][ue_id].code_rate
 
-                        if gl.RA_division == 'time':
-                            st.N_info[node_name][DIR][ue_id, 0] = N_symbols * spect_eff_i * number_of_RBs
-                        else:
-                            print('Frequency division with PF scheduler is currently not supported')
-                            assert ValueError
+                        st.N_info[node_name][DIR][ue_id, 0] = N_symbols * spect_eff_i * number_of_RBs
 
     def define_allowed_transmissions(self):
         # scheduled_ues = {'DL': [], 'UL': []}

@@ -18,6 +18,10 @@ plt.style.use('YS_plot_style.mplstyle')
 
 
 def packet_sim():
+    """
+    This functions starts the simulations with
+    the configured parameters
+    """
 
     BER_CURVES = load_BER()
 
@@ -26,10 +30,10 @@ def packet_sim():
     drop_IAB(gl.SIM_SEED)
 
     # Calculate parameters, which do not change during the calculations
-    OFDM_params = set_params_OFDM(gl.numerology)
+    OFDM_params = set_params_OFDM(gl.numerology_num)
     if gl.UE_mobility_pattern == 'stable':
         # periodicity determines the frequency of channel updates
-        periodicity = gl.time_stop_tics
+        periodicity = gl.sim_time_tics
     else:
         periodicity = gl.FRAME_DURATION_S / OFDM_params.RB_time_s
 
@@ -49,7 +53,7 @@ def packet_sim():
     num_active_UEs = {'DL': np.array([]), 'UL': np.array([])}
     number_of_hops_DL = np.array([])
 
-    for tic in range(0, gl.time_stop_tics):
+    for tic in range(0, gl.sim_time_tics):
 
         if tic % periodicity * 2 == 0:
             UE_positions = next(UE_mobility_model)
@@ -130,7 +134,7 @@ def packet_sim():
             else:
                 link_scheduler.current_state += 1
 
-    if gl.traffic == 'full':
+    if gl.traffic_type == 'full':
         calc_phy_throughput_FB()
 
     save_data(per_packet_throughput, packet_delay, num_active_UEs, number_of_hops_DL)

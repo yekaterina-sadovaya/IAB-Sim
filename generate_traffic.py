@@ -42,7 +42,7 @@ def ftp3_traffic(LOG_DIR, tic, seed):
 
             if len(st.packet_traffic[node_name][LINK][LOG_DIR][id]) <= 5000:
                 st.ue_associated_traffic_bytes[LOG_DIR][id, 0] = st.ue_associated_traffic_bytes[LOG_DIR][id, 0]\
-                                                                 + gl.file_size_bytes
+                                                                 + gl.burst_size_bytes
                 st.ue_associated_traffic_bytes[LOG_DIR][id, 1] = st.ue_associated_traffic_bytes[LOG_DIR][id, 1] +\
                                                                  np.random.exponential(1 / session_intensity)
 
@@ -57,7 +57,7 @@ if __name__ == '__main__':
 
     plt.plot([0, 70], [0, 0], color='blue')
     for point in session_arrival_times:
-        plt.vlines(session_arrival_times, 0, gl.file_size_bytes / 1e6, color='blue')
+        plt.vlines(session_arrival_times, 0, gl.burst_size_bytes / 1e6, color='blue')
     plt.grid()
     plt.xlabel('time, s')
     plt.ylabel('file size, Mbytes')
