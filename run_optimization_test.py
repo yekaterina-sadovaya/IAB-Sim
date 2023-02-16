@@ -2,7 +2,7 @@ from gl_vars import gl
 from stat_container import st
 from mobility.configure_mobility import set_mobility_model
 from lib.random_drop import drop_DgNB, drop_IAB
-from iab_optimization.optimization import Optimization, OptimizationParams
+from optimization.optimization import Optimization, OptimizationParams
 from topology_formation import TopologyCreator
 from phy.interpolate_ber_curves import load_BER
 from phy.abstractions import set_params_OFDM

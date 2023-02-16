@@ -1,52 +1,51 @@
 import matplotlib.pyplot as plt
-import numpy as np
 from matplotlib.ticker import MaxNLocator
-from iab_optimization.lib.utilities import DB2RATIO, toss_coin, RATIO2DB
-from iab_optimization.scenario import spectral_efficiency_UMa, spectral_efficiency_UMi,\
-     joint_blockage_UMa, joint_blockage_UMi, calculate_jain_index
-from iab_optimization.baseclass import *
+from channel.propagation import spectral_efficiency_UMa, spectral_efficiency_UMi
+from fb_optimization.baseclass import *
+from numpy.linalg import norm
 
 
 class Optimization(BaseClass):
+    """
+    Optimization of time allocation for
+    the full-buffer traffic
+    """
     def __init__(self, params):
         BaseClass.__init__(self, params)
-        self.multibeam = False
 
-    def optimize_single_link(self, multibeam, s_np_iab_DL, s_np_iab_UL, s_np_bs_DL, s_np_bs_UL, s_m_DL, s_m_UL):
+    def optimize_single_link(self, s_np_iab_DL, s_np_iab_UL, s_np_bs_DL, s_np_bs_UL, s_m_DL, s_m_UL):
 
-        self.multibeam = multibeam
+        if gl.print_Flag is True:
+            print('Optimization starts...')
 
-        if self.multibeam:
-            pass
-            # x_iab, x_bs, u = BaseClass.single_link_multibeam_maxmin(self, s_np_iab, s_np_bs, s_m)
+        optimization_output = BaseClass.optimizae_single_link(self, s_np_iab_DL, s_np_iab_UL, s_np_bs_DL,
+                                                              s_np_bs_UL, s_m_DL, s_m_UL)
+        if gl.print_Flag is True:
+            print('Finnished optimizing.')
+
+        if optimization_output is not None:
+            y_1 = optimization_output[0]
+            y_2 = optimization_output[1]
+            y_3 = optimization_output[2]
+            y_4 = optimization_output[3]
+            x_1 = optimization_output[4]
+            x_2 = optimization_output[5]
+            x_3 = optimization_output[6]
+            x_4 = optimization_output[7]
+            y_b1 = optimization_output[8]
+            y_1b = optimization_output[9]
+            eps_1 = optimization_output[10]
+            eps_2 = optimization_output[11]
+            eps_3 = optimization_output[12]
+            eps_4 = optimization_output[13]
+            return BaseClass.post_process_results(self, y_1, y_2, y_3, y_4, x_1, x_2, x_3, x_4, y_b1, y_1b,
+                                                  s_np_iab_DL, s_np_iab_UL, s_np_bs_DL, s_np_bs_UL,
+                                                  eps_1, eps_2, eps_3, eps_4)
         else:
-            optimization_output = BaseClass.optimizae_single_link(self, s_np_iab_DL, s_np_iab_UL, s_np_bs_DL,
-                                                                  s_np_bs_UL, s_m_DL, s_m_UL)
-            if optimization_output is not None:
-                y_1 = optimization_output[0]
-                y_2 = optimization_output[1]
-                y_3 = optimization_output[2]
-                y_4 = optimization_output[3]
-                x_1 = optimization_output[4]
-                x_2 = optimization_output[5]
-                x_3 = optimization_output[6]
-                x_4 = optimization_output[7]
-                y_b1 = optimization_output[8]
-                y_1b = optimization_output[9]
-                eps_1 = optimization_output[10]
-                eps_2 = optimization_output[11]
-                eps_3 = optimization_output[12]
-                eps_4 = optimization_output[13]
-                return BaseClass.post_process_results(self, y_1, y_2, y_3, y_4, x_1, x_2, x_3, x_4, y_b1, y_1b,
-                                                      s_np_iab_DL, s_np_iab_UL, s_np_bs_DL, s_np_bs_UL, eps_1, eps_2, eps_3, eps_4)
-            else:
-                return None
+            return None
 
 
 if __name__ == "__main__":
-    #from lib.plot_utilities import matplotlib_nikita_style
-    #matplotlib_nikita_style()
-    from numpy.linalg import norm
 
     n_IAB = 1
     n_UE = 30
@@ -78,14 +77,20 @@ if __name__ == "__main__":
     s_np_bs = np.empty([ue_bs.shape[0] * (iab_pos.shape[0] + 1), 0])
     for i in ue_bs:
         for j in bs_pos:
-            dist2d = norm(i[0:2] - j[0:2])
             dist3d = norm(i - j)
-            se = spectral_efficiency_UMa(dist2d, dist3d, 28e9, 30, 1.5, 33, 400e6)
+            se = spectral_efficiency_UMa(dist3d, 28e9, 30, 1.5, 33, 400e6)
             s_np_bs = np.append(s_np_bs, [se])
 
     s_m = np.array([7.5])
-    h, eps, y, x, backhaul = optimization.optimize_single_link(False, s_np_iab, s_np_bs, s_m)
+    optimization_output = optimization.optimize_single_link(s_np_iab, s_np_iab,
+                                                              s_np_bs, s_np_bs, s_m, s_m)
+    h = optimization_output[0]
+    eps = optimization_output[1]
+    y = optimization_output[2]
+    x = optimization_output[3]
+    backhaul = optimization_output[4]
 
+    # epsilon
     fg = plt.figure()
     eps = np.around(eps, 2)
     barWidth = 0.4
@@ -99,10 +104,9 @@ if __name__ == "__main__":
     ax = fg.gca()
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
     # plt.title('Max Min fair resource allocation')
-    # epsilon
 
+    # allocations
     fg = plt.figure()
-    #h = np.reshape(h, (h.shape[1]))
     y_pos = np.arange(1, h.shape[0] + 1)
     plt.bar(y_pos, h, align='center', alpha=0.5)
     for i in range(h.shape[0]//2):
@@ -114,9 +118,8 @@ if __name__ == "__main__":
     ax = fg.gca()
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
     # plt.ylim([0, 70])
-    # allocations
 
-
+    # time slots 1
     fg = plt.figure()
     barWidth = 0.4
     r1 = np.arange(1, y.shape[0] + 1)
@@ -128,8 +131,8 @@ if __name__ == "__main__":
     plt.legend(loc='best')
     plt.ylim([0, 0.8])
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-    # time slots 1
 
+    # time slots 2
     fg = plt.figure()
     non_used = y + backhaul - x
     r1 = np.arange(1, x.shape[0] + 1)
@@ -141,8 +144,6 @@ if __name__ == "__main__":
     plt.legend(loc='best')
     plt.ylim([0, 0.8])
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-    # time slots 2
-
 
     plt.show()
 

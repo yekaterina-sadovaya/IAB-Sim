@@ -11,15 +11,13 @@ class OptimizationParams(object):
         self.B_backhaul = gl.bandwidth
         self.B_access = gl.bandwidth
         self.Delta = 1
-        self.r_b = 0.3
-        self.h_b = 1.7
-        self.h_bs = 25
-        self.h_iab = 15
-        self.h_ue = 1.5
-        self.P_bs = 40
-        self.P_iab = 33
-        self.f_c = 30e9
-        self.cell_size = 300
+        self.h_bs = gl.DgNB_height
+        self.h_iab = gl.iab_height
+        self.h_ue = gl.UE_height
+        self.P_bs = gl.DgNB_tx_power_dBm
+        self.P_iab = gl.IAB_tx_power_dBm
+        self.f_c = gl.carrier_frequency_Hz
+        self.cell_size = gl.cell_radius_m
         self.ue_bs = ue_bs
         self.ue_iab = ue_iab
         self.number_of_IAB = gl.n_IAB
@@ -37,8 +35,6 @@ class BaseClass(object):
         self.B_backhaul = params.B_backhaul
         self.B_access = params.B_access
         self.Delta = params.Delta
-        self.r_b = params.r_b
-        self.h_b = params.h_b
         self.h_bs = params.h_bs
         self.h_iab = params.h_iab
         self.h_ue = params.h_ue
@@ -53,6 +49,12 @@ class BaseClass(object):
         self.ue_iab = params.ue_iab
 
     def optimizae_single_link(self, s_np_iab_DL, s_np_iab_UL, s_np_bs_DL, s_np_bs_UL, s_m_DL, s_m_UL):
+        """
+        Optimization for the full-buffer traffic
+        :input: DL and UL spectral efficiencies of IAB nodes, DgNB, and UEs
+        :return: y_1, y_2, y_3, y_4, x_1, x_2, x_3, x_4, y_b1, y_1b, eps_1, eps_2, eps_3, eps_4
+        (slot allocations per UEs, backhaul, and frame division)
+        """
 
         n_ue_iab = s_np_iab_DL.shape[0]
         n_ue_bs = s_np_bs_DL.shape[0]
@@ -193,12 +195,8 @@ class BaseClass(object):
 
             return y_1, y_2, y_3, y_4, x_1, x_2, x_3, x_4, y_b1, y_1b, eps_1, eps_2, eps_3, eps_4
 
-
     def post_process_results(self, y_1, y_2, y_3, y_4, x_1, x_2, x_3, x_4, y_b1, y_1b,
                              s_np_iab_DL, s_np_iab_UL, s_np_bs_DL, s_np_bs_UL, eps_1, eps_2, eps_3, eps_4):
-
-        from iab_optimization.lib.plot_utilities import matplotlib_nikita_style
-        matplotlib_nikita_style()
 
         n_ue_iab = s_np_iab_DL.shape[0]
         n_ue_bs = s_np_bs_DL.shape[0]

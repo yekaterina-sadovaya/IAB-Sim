@@ -112,7 +112,7 @@ def WQF_metric(active_ues, coefficient_eps, time_fraction_number, node_name):
     DIR = st.allowed_transmissions[time_fraction_number][node_name]
     max_w = np.max(st.optimal_weights[node_name])
     # Weighted Fair Queuing initializes RR metric with the weights,
-    # which are computed via optimization
+    # which are computed via fb_optimization
     if len(active_ues) != 0:
 
         current_time = st.simulation_time_s

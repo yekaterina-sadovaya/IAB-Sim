@@ -2,6 +2,10 @@ import numpy as np
 
 
 class GL_container_class:
+    """
+    This class combines all parameters required to configure
+    the simulation environment
+    """
     def __init__(self):
 
         # ------------------------Generic simulation parameters------------------------
@@ -31,13 +35,13 @@ class GL_container_class:
         self.frame_division_policy = 'OPT'              # available: '50/50', 'PF', 'OPT'
 
         self.use_average = True                         # if this flag is enable, average values
-                                                        # of spectral efficiencies will be used in the optimization
+                                                        # of spectral efficiencies will be used in the fb_optimization
                                                         # if disable, instant variables will be used
-        self.optimization_type = 'MAXMIN'               # choose optimization: 'MAXMIN' or 'PF'
+        self.optimization_type = 'MAXMIN'               # choose fb_optimization: 'MAXMIN' or 'PF'
         self.scheduler = 'WFQ'                          # PF, RR, WFQ, WPF
                                                         # PF and RR are non-parametrized schedulers
-                                                        # (use without optimization)
-                                                        # WPF and WFQ use coefficients from the optimization
+                                                        # (use without fb_optimization)
+                                                        # WPF and WFQ use coefficients from the fb_optimization
 
         # ------------------------Channel calculation and blockage---------------------------
         self.channel_update_periodicity_tics = 5000
@@ -83,7 +87,7 @@ class GL_container_class:
         # ------------------------Printing, Plotting, and Saving-----------------------------
         self.print_Flag = True
         self.plot_Flag = False
-        self.optimization_stats = True                  # enable to gather optimization statistics, e.g.,
+        self.optimization_stats = True                  # enable to gather fb_optimization statistics, e.g.,
                                                         # allocations and coefficients
 
         # initialize positions of IAB and donor nodes to empty (used in the calculations)

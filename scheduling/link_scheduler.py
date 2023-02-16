@@ -1,24 +1,28 @@
 from gl_vars import gl
 from stat_container import st
 from phy.bercurve import set_params_PHY
-from iab_optimization.optimization import Optimization, OptimizationParams
+from fb_optimization.optimization import Optimization, OptimizationParams
 from library.calc_params import insert_zero_coefficients
 
 import numpy as np
 
 
 class LinkScheduler:
+    """
+    Non-optimal link scheduler
+    """
     def __init__(self):
         self.current_state = 1
         self.C = {1: 0.5, 2: 0, 3: 0, 4: 0.5}
         self.active_ues = {}
 
     def divide_frame(self, *args):
+        """
+        Computes frame division coefficients
+        """
         active_UEs_DL = st.active_UEs['DL']
         active_UEs_UL = st.active_UEs['UL']
-        # active_UEs_DL = [k for k, v in st.packet_traffic['DL'].items() if v]
         self.active_ues['DL'] = active_UEs_DL
-        # active_UEs_UL = [k for k, v in st.packet_traffic['UL'].items() if v]
         self.active_ues['UL'] = active_UEs_UL
         if gl.frame_division_policy == 'PF':
             if (active_UEs_UL.__len__() + active_UEs_DL.__len__()) != 0:
@@ -27,22 +31,25 @@ class LinkScheduler:
 
 
 class LinkSchedulerOptimal(LinkScheduler):
+    """
+    Optimal link scheduler
+    """
     def __init__(self):
         LinkScheduler.__init__(self)
         self.DgNB_OPT_BH_coefficients = [0.25, 0, 0, 0.25]
         self.C = {1: 0.25, 2: 0.25, 3: 0.25, 4: 0.25}
 
     def divide_frame(self, *args):
-        # active_UEs_DL = [k for k, v in st.packet_traffic['DL'].items() if v]
-        # active_UEs_UL = [k for k, v in st.packet_traffic['UL'].items() if v]
-        # when using optimization + simulator, the traffic must be symmetric, i.e. the same UEs
+        """
+        Computes frame division coefficients using fb_optimization
+        """
+
+        # when using fb_optimization + simulator, the traffic must be symmetric, i.e. the same UEs
         # are active at a time
         self.active_ues['DL'] = st.active_UEs['DL']
         self.active_ues['UL'] = st.active_UEs['UL']
 
-        # 1600  (200 ms = 1ms*200; 200 ms = 0.125 ms*1600), 400 = 50 ms
-        # if st.simulation_time_tics % 1600 == 0:
-        if st.simulation_time_tics == 0: # or st.simulation_time_tics % 1600 == 0:
+        if st.simulation_time_tics == 0:
             UE_positions_tr = args[0]
             PL_DgNB_IAB = args[1]
             BER_CURVES = args[2]
@@ -52,13 +59,9 @@ class LinkSchedulerOptimal(LinkScheduler):
             spect_eff_ue_iab_DL, spect_eff_ue_bs_DL = np.array([]), np.array([])
             spect_eff_ue_iab_UL, spect_eff_ue_bs_UL = np.array([]), np.array([])
             for ue_i in range(0, gl.n_UEs):
-                # se_DL = st.PHY_params['DL'][ue_i].mod_order * st.PHY_params['DL'][ue_i].code_rate
-                # se_UL = st.PHY_params['UL'][ue_i].mod_order * st.PHY_params['UL'][ue_i].code_rate
                 if st.closest_bs_indices[ue_i] != 0:
                     ues_belong_to_iab_nodes.append(ue_i)
                     node_name = 'I' + str(st.closest_bs_indices[ue_i][0])
-                    # if gl.num_interfaces_IAB > 1:
-                    #     node_name = node_name + '_1'
                     if gl.use_average is True:
                         spect_eff_ue_iab_DL = np.append(spect_eff_ue_iab_DL,
                                                         [st.PHY_params_average[node_name]['DL'][ue_i].mod_order *
@@ -112,7 +115,7 @@ class LinkSchedulerOptimal(LinkScheduler):
 
             params = OptimizationParams(ue_pos, ue_bs, ue_iab)
             optimization = Optimization(params)
-            optimization_output = optimization.optimize_single_link(False, spect_eff_ue_iab_DL, spect_eff_ue_iab_UL,
+            optimization_output = optimization.optimize_single_link(spect_eff_ue_iab_DL, spect_eff_ue_iab_UL,
                                                                     spect_eff_ue_bs_DL, spect_eff_ue_bs_UL,
                                                                     spect_eff_DgNB_IAB, spect_eff_DgNB_IAB)
 
@@ -192,7 +195,6 @@ class LinkSchedulerOptimal(LinkScheduler):
                         axs.flat[2].xaxis.set_major_locator(MaxNLocator(integer=True))
                         axs[1, 0].legend()
 
-                        # non_used = y + backhaul - x
                         non_used = eps - x
                         r1 = np.arange(1, x.shape[0] + 1)
                         axs[1, 1].bar(r1, x, width=barWidth, edgecolor='black', label='UE allocations', hatch='//')
@@ -201,7 +203,6 @@ class LinkSchedulerOptimal(LinkScheduler):
                         axs.flat[3].set(ylim=[0, 0.8])
                         axs.flat[3].xaxis.set_major_locator(MaxNLocator(integer=True))
                         axs[1, 1].legend()
-                        #plt.savefig('not_used.svg')
 
                 # gather weighting coefficients
                 if len(y) != 0:

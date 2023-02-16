@@ -23,31 +23,30 @@ def packet_sim():
     the configured parameters
     """
 
+    # First, it load all the dependencies and generates the nodes locations, schedulers types,
+    # as well as other parameters, which do not change during the calculations but depend on the setup
     BER_CURVES = load_BER()
-
-    # Drop the DgNB and IAB nodes
     drop_DgNB(gl.SIM_SEED)
     drop_IAB(gl.SIM_SEED)
-
-    # Calculate parameters, which do not change during the calculations
     OFDM_params = set_params_OFDM(gl.numerology_num)
     if gl.UE_mobility_pattern == 'stable':
-        # periodicity determines the frequency of channel updates
-        periodicity = gl.sim_time_tics
+        periodicity = gl.sim_time_tics                  # periodicity determines the frequency of UE positions updates;
+                                                        # not to confuse with channel periodicity
     else:
         periodicity = gl.FRAME_DURATION_S / OFDM_params.RB_time_s
-
-    UE_mobility_model = set_mobility_model(gl.SIM_SEED, gl.FRAME_DURATION_S)
     topology = TopologyCreator(BER_CURVES)
-    if gl.frame_division_policy != 'OPT':
+    if gl.frame_division_policy != 'OPT':               # Link scheduler (responsible for link directionality) type
         link_scheduler = LinkScheduler()
     else:
         link_scheduler = LinkSchedulerOptimal()
     packet_scheduler = Scheduler()
 
-    st.__init__()
+    # Set UE mobility pattern generator
+    UE_mobility_model = set_mobility_model(gl.SIM_SEED,
+                                           gl.FRAME_DURATION_S)
 
-    # Containers to store data
+    # Initialize variables and containers for storing the statistics
+    st.__init__()
     per_packet_throughput = {'DL': np.array([]), 'UL': np.array([])}
     packet_delay = {'DL': np.array([]), 'UL': np.array([])}
     num_active_UEs = {'DL': np.array([]), 'UL': np.array([])}
@@ -55,20 +54,21 @@ def packet_sim():
 
     for tic in range(0, gl.sim_time_tics):
 
-        if tic % periodicity * 2 == 0:
+        # UE positions update
+        if tic % periodicity == 0:
             UE_positions = next(UE_mobility_model)
-            # Transform according to the cell size
             x = UE_positions[:, 0] - gl.cell_radius_m
             y = UE_positions[:, 1] - gl.cell_radius_m
             UE_positions_tr = [x, y, UE_positions[:, 2]]
             UE_positions_tr = np.transpose(UE_positions_tr)
 
         if tic == 0:
-            # generate traffic (demands) for each UE initially
+            # At t = 0, associations are established and initial demands are generated for each UEs
             ftp3_traffic('UL', tic, gl.SIM_SEED)
             ftp3_traffic('DL', tic, gl.SIM_SEED)
             topology.determine_initial_associations(UE_positions_tr)
             if gl.plot_Flag is True:
+                # Deployment will be plotted if plotting flag is enabled
                 indices1 = np.where(st.closest_bs_indices == 0)[0]
                 UE_positions_DgNB = UE_positions_tr[indices1, :]
                 indices2 = np.where(st.closest_bs_indices == 1)[0]
@@ -90,28 +90,35 @@ def packet_sim():
             packetize_data('DL')
             packetize_data('UL')
 
+            # Frame pattern is determined based on the selected policy
             if gl.frame_division_policy != 'OPT':
                 link_scheduler.divide_frame()
             else:
                 link_scheduler.divide_frame(UE_positions_tr, topology.PL_bw_DgNB_IAB, BER_CURVES)
 
+            # C is the coefficient for each time duration. If fb_optimization is disabled, there are
+            # 2 parts of the frame. If fb_optimization is enabled, there are 4 in general.
+            # Different parts correspond to different link directionality (see docs)
             C = link_scheduler.C[link_scheduler.current_state]
             st.simulation_time_tics = tic
 
-            # C is the coefficient for each time duration. There are 4 in general but when
-            # optimization framework turned off, only the 1st and 4th slots are used (backhaul is never disabled)
             if C != 0:
 
+                # This part will assign the direction (UL or DL) to each node,
+                # create schedules, and allocate the resources
                 packet_scheduler.define_allowed_transmissions()
                 packet_scheduler.run_scheduler(link_scheduler, topology, UE_positions_tr)
 
+                # This simulates the transmission process of the scheduled UEs
                 if np.any(link_scheduler.active_ues['DL']) or np.any(link_scheduler.active_ues['UL']):
                     transmit_blocks(link_scheduler, packet_scheduler, OFDM_params, BER_CURVES)
 
+                # After transmission is over, we gather average statistics
                 if any(st.mean_throughput['DL']):
                     st.mean_throughput['DL'] = np.mean(st.mean_throughput['DL'])
                     st.mean_delay['DL'] = np.mean(st.mean_delay['DL'])
 
+                # Update traffic
                 ftp3_traffic('DL', tic, gl.SIM_SEED)
                 ftp3_traffic('UL', tic, gl.SIM_SEED)
 
@@ -119,9 +126,8 @@ def packet_sim():
                     combine_metrics(link_scheduler, tic, per_packet_throughput,
                                     packet_delay, num_active_UEs, number_of_hops_DL)
 
-                # update simulation time
+                # update simulation time and channel
                 st.simulation_time_s = st.simulation_time_s + gl.FRAME_DURATION_S * C
-
                 if tic % gl.channel_update_periodicity_tics == 0:
                     for UE_num, UE_position in enumerate(UE_positions_tr):
                         topology.update_channel(UE_position, UE_num, 'DL', 'AC')

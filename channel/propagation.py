@@ -6,7 +6,7 @@ from library.stuff import RATIO2DB, DB2RATIO, cart2sph
 from library.vectors import vector_normalize, norm
 from channel.channel_config import MP_chan_params
 from numpy.random import shuffle, uniform, choice, normal, rand
-from math import exp
+from math import exp, log2
 import scipy.stats as stats
 
 
@@ -402,6 +402,21 @@ def UMa_LoS(dist, f_carrier, h_bs=25.0, h_ms=1.5):
     return pl, pl_average
 
 
+def UMi_street_canyon_los(dist2d, dist3d, f_carrier, h_bs, h_ut):
+    d_bp = 4.0 * (h_bs - 1.0) * (h_ut - 1.0) * f_carrier / speed_of_light
+    PL_MAX = 200
+    if dist2d > 5000.0:
+        return PL_MAX
+    if dist2d < 10.0:
+        dist2d = 10.0 + (10.0 - dist2d)
+
+    if dist2d < d_bp:
+        pl = 32.4 + 21 * log10(dist3d) + 20 * log10(f_carrier / 1e9)
+    else:
+        pl = 32.4 + 40.0 * log10(dist3d) + 20.0 * log10(f_carrier / 1e9) - 9.5 * log10(d_bp ** 2 + (h_bs - h_ut) ** 2)
+    return pl
+
+
 def UMi_LOS_probability(distance):
 
     if distance <= 18:
@@ -435,3 +450,21 @@ def time_blocked(is_blocked, bl_density, distance, average_velocity,
         return time_interval_non_blocked
     else:
         return time_interval_blocked
+
+
+def spectral_efficiency_UMi(dist2d, dist3d, f_carrier, h_bs, h_ut, P_t, B):
+    pathloss = UMi_street_canyon_los(dist2d, dist3d, f_carrier, h_bs, h_ut)
+    snr = P_t + 15 - pathloss + 10 + 174 - 10 * log10(B) - 13
+    i = 3
+    sinr_lin = DB2RATIO(snr - i)
+    s = log2(1 + sinr_lin)
+    return s
+
+
+def spectral_efficiency_UMa(dist3d, f_carrier, h_bs, h_ut, P_t, B):
+    pathloss = UMa_LoS(dist3d, f_carrier, h_bs, h_ut)[1]
+    snr = P_t + 15 - pathloss + 10 + 174 - 10 * log10(B) - 13
+    i = 3
+    sinr_lin = DB2RATIO(snr - i)
+    s = log2(1 + sinr_lin)
+    return s
