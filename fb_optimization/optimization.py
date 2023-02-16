@@ -3,6 +3,7 @@ from matplotlib.ticker import MaxNLocator
 from channel.propagation import spectral_efficiency_UMa, spectral_efficiency_UMi
 from fb_optimization.baseclass import *
 from numpy.linalg import norm
+import os
 
 
 class Optimization(BaseClass):
@@ -44,8 +45,76 @@ class Optimization(BaseClass):
         else:
             return None
 
+    def plot_allocations(self, optimization_output):
+        h = optimization_output[0]
+        eps = optimization_output[1]
+        y = optimization_output[2]
+        x = optimization_output[3]
+        backhaul = optimization_output[4]
+
+        # epsilon
+        fg = plt.figure()
+        eps = np.around(eps, 2)
+        barWidth = 0.4
+        r1 = np.arange(1, eps.shape[0] + 1)
+        plt.bar(r1, eps, width=barWidth, edgecolor='black', align='center', alpha=0.5, color='b')
+        for i in range(eps.shape[0]):
+            plt.text(i+1, eps[i], str(eps[i]))
+        plt.xlabel('Timeslot')
+        plt.ylabel('Timeslot duration')
+        plt.ylim([0, 0.8])
+        ax = fg.gca()
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+        # plt.title('Max Min fair resource allocation')
+
+        # allocations
+        fg = plt.figure()
+        y_pos = np.arange(1, h.shape[0] + 1)
+        plt.bar(y_pos, h, align='center', alpha=0.5)
+        for i in range(h.shape[0]//2):
+            plt.text(i+1, h[i], str('D'))
+        for i in range(h.shape[0]//2):
+            plt.text(h.shape[0]//2+i+1, h[i], str('U'))
+        plt.xlabel('UE data rates')
+        plt.ylabel('$h_{n}, Mbps$')
+        ax = fg.gca()
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+        # plt.ylim([0, 70])
+
+        # time slots 1
+        fg = plt.figure()
+        barWidth = 0.4
+        r1 = np.arange(1, y.shape[0] + 1)
+        plt.bar(r1, y, width=barWidth, edgecolor='black', label='UE allocations', hatch='//')
+        plt.bar(r1, backhaul, width=barWidth, edgecolor='black', label='Backhaul allocations', hatch='\\', bottom=y)
+        plt.xlabel('Timeslots')
+        plt.ylabel('Value')
+        ax = fg.gca()
+        plt.legend(loc='best')
+        plt.ylim([0, 0.8])
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+
+        # time slots 2
+        fg = plt.figure()
+        non_used = y + backhaul - x
+        r1 = np.arange(1, x.shape[0] + 1)
+        plt.bar(r1, x, width=barWidth, edgecolor='black', label='UE allocations', hatch='//')
+        plt.bar(r1, non_used, width=barWidth, edgecolor='black', color='grey', label='Not used', hatch='\\', bottom=x)
+        plt.xlabel('Timeslots')
+        plt.ylabel('Value')
+        ax = fg.gca()
+        plt.legend(loc='best')
+        plt.ylim([0, 0.8])
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+
+        plt.show()
+
 
 if __name__ == "__main__":
+
+    os.chdir("..")
+    directory = os.path.abspath(os.curdir)
+    plt.style.use(directory + '\\post_processing\\YS_plot_style.mplstyle')
 
     n_IAB = 1
     n_UE = 30
@@ -84,66 +153,5 @@ if __name__ == "__main__":
     s_m = np.array([7.5])
     optimization_output = optimization.optimize_single_link(s_np_iab, s_np_iab,
                                                               s_np_bs, s_np_bs, s_m, s_m)
-    h = optimization_output[0]
-    eps = optimization_output[1]
-    y = optimization_output[2]
-    x = optimization_output[3]
-    backhaul = optimization_output[4]
-
-    # epsilon
-    fg = plt.figure()
-    eps = np.around(eps, 2)
-    barWidth = 0.4
-    r1 = np.arange(1, eps.shape[0] + 1)
-    plt.bar(r1, eps, width=barWidth, edgecolor='black', align='center', alpha=0.5, color='b')
-    for i in range(eps.shape[0]):
-        plt.text(i+1, eps[i], str(eps[i]))
-    plt.xlabel('Timeslot')
-    plt.ylabel('Timeslot duration')
-    plt.ylim([0, 0.8])
-    ax = fg.gca()
-    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-    # plt.title('Max Min fair resource allocation')
-
-    # allocations
-    fg = plt.figure()
-    y_pos = np.arange(1, h.shape[0] + 1)
-    plt.bar(y_pos, h, align='center', alpha=0.5)
-    for i in range(h.shape[0]//2):
-        plt.text(i+1, h[i], str('D'))
-    for i in range(h.shape[0]//2):
-        plt.text(h.shape[0]//2+i+1, h[i], str('U'))
-    plt.xlabel('UE data rates')
-    plt.ylabel('$h_{n}, Mbps$')
-    ax = fg.gca()
-    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-    # plt.ylim([0, 70])
-
-    # time slots 1
-    fg = plt.figure()
-    barWidth = 0.4
-    r1 = np.arange(1, y.shape[0] + 1)
-    plt.bar(r1, y, width=barWidth, edgecolor='black', label='UE allocations', hatch='//')
-    plt.bar(r1, backhaul, width=barWidth, edgecolor='black', label='Backhaul allocations', hatch='\\', bottom=y)
-    plt.xlabel('Timeslots')
-    plt.ylabel('Value')
-    ax = fg.gca()
-    plt.legend(loc='best')
-    plt.ylim([0, 0.8])
-    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-
-    # time slots 2
-    fg = plt.figure()
-    non_used = y + backhaul - x
-    r1 = np.arange(1, x.shape[0] + 1)
-    plt.bar(r1, x, width=barWidth, edgecolor='black', label='UE allocations', hatch='//')
-    plt.bar(r1, non_used, width=barWidth, edgecolor='black', color='grey', label='Not used', hatch='\\', bottom=x)
-    plt.xlabel('Timeslots')
-    plt.ylabel('Value')
-    ax = fg.gca()
-    plt.legend(loc='best')
-    plt.ylim([0, 0.8])
-    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-
-    plt.show()
+    optimization.plot_allocations(optimization_output)
 

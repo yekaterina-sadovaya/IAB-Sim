@@ -86,7 +86,7 @@ class GL_container_class:
 
         # ------------------------Printing, Plotting, and Saving-----------------------------
         self.print_Flag = True
-        self.plot_Flag = False
+        self.plot_Flag = True
         self.optimization_stats = True                  # enable to gather fb_optimization statistics, e.g.,
                                                         # allocations and coefficients
 

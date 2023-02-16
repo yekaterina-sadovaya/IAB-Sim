@@ -10,11 +10,12 @@ from scheduling.packet_scheduler import Scheduler
 from library.random_drop import drop_DgNB, drop_IAB
 from phy.interpolate_ber_curves import load_BER
 from post_processing.gather_results import combine_metrics, save_data
+import os
 
 import numpy as np
 import matplotlib.pyplot as plt
-
-plt.style.use('YS_plot_style.mplstyle')
+directory = os.getcwd()
+plt.style.use(directory + '\\post_processing\\YS_plot_style.mplstyle')
 
 
 def packet_sim():

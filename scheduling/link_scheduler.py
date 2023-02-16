@@ -4,7 +4,11 @@ from phy.bercurve import set_params_PHY
 from fb_optimization.optimization import Optimization, OptimizationParams
 from library.calc_params import insert_zero_coefficients
 
+import os
+import matplotlib.pyplot as plt
 import numpy as np
+directory = os.getcwd()
+plt.style.use(directory + '\\post_processing\\YS_plot_style.mplstyle')
 
 
 class LinkScheduler:
@@ -126,6 +130,9 @@ class LinkSchedulerOptimal(LinkScheduler):
                 y = optimization_output[2]
                 x = optimization_output[3]
                 backhaul = optimization_output[4]
+
+                if gl.plot_Flag is True:
+                    optimization.plot_allocations(optimization_output)
 
                 y_1 = optimization_output[5][0]
                 y_2 = optimization_output[5][1]

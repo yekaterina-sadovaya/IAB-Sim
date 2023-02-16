@@ -5,6 +5,7 @@ import numpy as np
 
 speed_of_light = 299792458
 
+
 def sign(x: float):
     """
     :param x: input arg, must be scalar
@@ -99,13 +100,4 @@ def dic_parse(s: str, sep1: str = ' ', sep2: str = '_'):
     finally:
         return d
 
-
-def log2(x):
-    """
-    Returns a log2 of value while preserving type
-    :param x:
-    :return:
-    """
-    t = type(x)
-    return t(log(x, 2))
 
