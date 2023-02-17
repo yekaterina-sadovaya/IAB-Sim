@@ -10,7 +10,7 @@ class GL_container_class:
 
         # ------------------------Generic simulation parameters------------------------
         self.SIM_SEED = 1
-        self.sim_time_tics = 100                         # 1 tic equals 1 DL or UL interval in a frame
+        self.sim_time_tics = 1000                         # 1 tic equals 1 DL or UL interval in a frame
 
         # ------------------------Deployment configuration----------------------------
         self.carrier_frequency_Hz = 28e9
@@ -32,13 +32,13 @@ class GL_container_class:
         self.traffic_type = 'full'                           # choose from 'FTP' or 'full'
 
         # ------------------------Scheluling and Optimization--------------------------------
-        self.frame_division_policy = 'OPT'              # available: '50/50', 'PF', 'OPT'
+        self.frame_division_policy = 'PF'              # available: '50/50', 'PF', 'OPT'
 
         self.use_average = True                         # if this flag is enable, average values
                                                         # of spectral efficiencies will be used in the fb_optimization
                                                         # if disable, instant variables will be used
         self.optimization_type = 'MAXMIN'               # choose fb_optimization: 'MAXMIN' or 'PF'
-        self.scheduler = 'WFQ'                          # PF, RR, WFQ, WPF
+        self.scheduler = 'PF'                          # PF, RR, WFQ, WPF
                                                         # PF and RR are non-parametrized schedulers
                                                         # (use without fb_optimization)
                                                         # WPF and WFQ use coefficients from the fb_optimization
@@ -70,7 +70,7 @@ class GL_container_class:
                                                         # for FTP traffic, 1 Mbyte = 1e6 bytes is the standard value
         self.packet_size_bytes = 1053                   # packet size and block size should be put equal
                                                         # to enable faster calculations without fragmentations
-        self.max_codeblock_size_bytes = 1053            # for other block sizes, BLER curves should be provided
+        self.max_codeblock_size_bytes = 1053
         self.max_ARQ_retries = 3                        # maximum number of retransmissions allowed
 
         # ------------------------UE mobility configurations---------------------------------

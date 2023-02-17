@@ -5,6 +5,10 @@ from stat_container import st
 
 
 def ftp3_traffic(LOG_DIR, tic, seed):
+    """
+    Poisson traffic generator
+    """
+
     np.random.seed(seed)
 
     if LOG_DIR == 'DL':
@@ -15,11 +19,6 @@ def ftp3_traffic(LOG_DIR, tic, seed):
         print("Logical directions were specified incorrectly.")
         raise ValueError
 
-    # if gl.traffic == 'FTP':
-    #     inds = np.where(st.ue_associated_traffic_bytes[LOG_DIR][:, 1] < st.simulation_time_s)
-    #     inds = inds[0]
-    # else:
-    #     inds = range(0, gl.n_UEs)
     inds = np.where(st.ue_associated_traffic_bytes[LOG_DIR][:, 1] < st.simulation_time_s)
     inds = inds[0]
 

@@ -14,6 +14,8 @@ class packing_params():
 
 
 class ARQ_block:
+    """ARQ block class"""
+
     def __init__(self, current_slot, params=packing_params()):
         if params is None:
             params = packing_params()

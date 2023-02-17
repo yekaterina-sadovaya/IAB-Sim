@@ -24,14 +24,20 @@ def find_multipliers(number):
 
 
 def RoundRobin_metric(active_ues, time_fraction_number, node_name):
+    """
+    Recompute the time each user
+    was last served
+    :param active_ues: UEs, which have traffic in their buffers
+    :param time_fraction_number: frame part number
+    :param node_name: number (id) of IAB node or donor
+    :return: re-ordered list of users
+    """
 
     if len(active_ues) != 0:
         DIR = st.allowed_transmissions[time_fraction_number][node_name]
         RR_metric = np.array([])
         for ue in active_ues:
             current_time = st.simulation_time_s
-            # request time is needed if we consider FIFO metric
-            # request_time = st.packet_traffic[link_scheduler.current_state][ue][0].arrival_time
             last_time_served = st.last_time_served[DIR][ue]
             if last_time_served:
                 RR_metric = np.append(RR_metric, current_time - last_time_served)
@@ -45,14 +51,26 @@ def RoundRobin_metric(active_ues, time_fraction_number, node_name):
 
 
 def PF_metric(active_ues, symb_total, time_fraction_number, node_name):
+    """
+    Computes PF metric
+    :param active_ues: UEs, which have traffic in their buffers
+    :param symb_total: number of available symbols
+    :param time_fraction_number: frame part number
+    :param node_name: number (id) of IAB node or donor
+    :return: re-ordered list of users
+    """
+
     transmitted_bits_estimate = np.array([])
     if len(active_ues) != 0:
         PF_metric = np.array([])
         DIR = st.allowed_transmissions[time_fraction_number][node_name]
         for ue in active_ues:
-            spect_eff_i = \
-                st.PHY_params[node_name][DIR][ue].mod_order * \
-                st.PHY_params[node_name][DIR][ue].code_rate
+            if st.PHY_params[node_name][DIR][ue]:
+                spect_eff_i = \
+                    st.PHY_params[node_name][DIR][ue].mod_order * \
+                    st.PHY_params[node_name][DIR][ue].code_rate
+            else:
+                spect_eff_i = 0
             estimated_throughput = spect_eff_i * number_of_RBs * symb_total
             transmitted_bits_estimate = np.append(transmitted_bits_estimate, estimated_throughput)
             estimated_throughput = estimated_throughput / 1e-3
@@ -72,6 +90,10 @@ def PF_metric(active_ues, symb_total, time_fraction_number, node_name):
 
 
 def WPF_metric(active_ues, symb_total, time_fraction_number, node_name, coefficient_eps):
+    """
+    WPF is used in a combination with optimization,
+    PF metric is scaled by the optimal coefficients
+    """
 
     if len(active_ues) != 0:
         WPF_metric = np.array([])
@@ -109,6 +131,11 @@ def WPF_metric(active_ues, symb_total, time_fraction_number, node_name, coeffici
 
 
 def WQF_metric(active_ues, coefficient_eps, time_fraction_number, node_name):
+    """
+    WFQ is used in a combination with optimization,
+    RR metric is scaled by the optimal coefficients
+    """
+
     DIR = st.allowed_transmissions[time_fraction_number][node_name]
     max_w = np.max(st.optimal_weights[node_name])
     # Weighted Fair Queuing initializes RR metric with the weights,
@@ -139,14 +166,11 @@ def WQF_metric(active_ues, coefficient_eps, time_fraction_number, node_name):
 
 
 class Scheduler:
+    """
+    Scheduler class
+    """
     def __init__(self):
-        # Format: NodeType_NodeNumber_NumberOfInterface
-        # if gl.num_interfaces_IAB > 1:
-        #     self.schedules = {'I' + str(k1) + '_' + str(k2): {'DL': [], 'UL': []} for k1 in range(1, gl.n_IAB + 1)
-        #                       for k2 in range(1, gl.num_interfaces_IAB+1)}
-        # else:
         self.schedules = {'I' + str(k1): {'DL': [], 'UL': []} for k1 in range(1, gl.n_IAB + 1)}
-
         self.schedules['D'] = {'DL': [], 'UL': []}
 
     def run_scheduler(self, link_scheduler, topology, UE_positions):
@@ -236,12 +260,6 @@ class Scheduler:
                                         st.BH_counter[time_fraction_number][2] = st.BH_counter[time_fraction_number][2] + 1
                                         st.BH_counter[time_fraction_number][0] = st.BH_counter[time_fraction_number][0] + 1
 
-                    # if (self.schedules['D'][DIR]) == 0:
-                    #     for ue_to_schedule in active_ues:
-                    #         IfTraffic = len(st.packet_traffic['D'][DIR][ue_to_schedule]) != 0
-                    #         if IfTraffic:
-                    #             self.schedules['D'][DIR] = [[ue_to_schedule]]
-
     def allocate_resources(self, link_scheduler, current_slot_fraction, topology, UE_positions):
 
         N_symbols = st.symbols_per_ue[current_slot_fraction]
@@ -265,7 +283,6 @@ class Scheduler:
                         st.N_info[node_name][DIR][ue_id, 0] = N_symbols * spect_eff_i * number_of_RBs
 
     def define_allowed_transmissions(self):
-        # scheduled_ues = {'DL': [], 'UL': []}
         for n1 in range(0, N_BS):
             if n1 == 0:
                 s = 'D'
@@ -283,23 +300,3 @@ class Scheduler:
                 st.allowed_transmissions[2][s] = 'UL'
                 st.allowed_transmissions[3][s] = 'DL'
 
-            # if self.schedules[s]['DL']:
-            #     scheduled_ues['DL'].append(self.schedules[s]['DL'][0])
-            # if self.schedules[s]['UL']:
-            #     scheduled_ues['UL'].append(self.schedules[s]['UL'][0])
-
-        # DL_paths_in_TTI, UL_paths_in_TTI = [], []
-        # if scheduled_ues['DL']:
-        #     DL_paths_in_TTI = calc_existing_transmissions(scheduled_ues['DL'], 'DL')
-        # if scheduled_ues['UL']:
-        #     UL_paths_in_TTI = calc_existing_transmissions(scheduled_ues['UL'], 'UL')
-
-
-def calc_existing_transmissions(scheduled_ues, DIR):
-    paths_in_TTI = []
-    for m, ue_in_TTI in enumerate(scheduled_ues):
-        ue_in_TTI = ue_in_TTI[0]
-        full_path = st.backhaul_routes[ue_in_TTI]
-        paths_in_TTI.append(full_path[DIR])
-
-    return paths_in_TTI

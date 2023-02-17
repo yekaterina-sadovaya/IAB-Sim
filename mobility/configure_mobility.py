@@ -3,7 +3,13 @@ from gl_vars import gl
 
 
 def set_mobility_model(SIM_SEED, frame_duration_s):
-    # configures UE mobility
+    """
+    Configures UE mobility
+    :param SIM_SEED: random seed
+    :param frame_duration_s: frame duration in seconds
+    :return: mobility generator
+    """
+
     if gl.UE_mobility_pattern == 'RDM':
         mobility_model = random_direction(gl.n_UEs, dimensions=(2 * gl.cell_radius_m, 2 * gl.cell_radius_m),
                                           height=gl.UE_height, velocity=(

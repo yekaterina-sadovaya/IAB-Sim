@@ -436,6 +436,7 @@ class RandomDirection(StochasticWalk):
         
         StochasticWalk.__init__(self, nr_nodes, dimensions, height, FL_DISTR, VELOCITY_DISTR, WT_DISTR=WT_DISTR, border_policy=border_policy)
 
+
 class TruncatedLevyWalk(StochasticWalk):
     
     def __init__(self, nr_nodes, dimensions, height=1.5, velocity=1., seed=10, FL_EXP=-20.6, FL_MAX=100., WT_EXP=-1.8, WT_MAX=10., border_policy='reflect'):
@@ -486,6 +487,7 @@ class TruncatedLevyWalk(StochasticWalk):
         
         StochasticWalk.__init__(self, nr_nodes, dimensions, height, FL_DISTR, VELOCITY_DISTR, WT_DISTR=WT_DISTR, border_policy=border_policy)
 
+
 class HeterogeneousTruncatedLevyWalk(StochasticWalk):
 
     def __init__(self, nr_nodes, dimensions, height=1.5, WT_EXP=-1.8, WT_MAX=100., FL_EXP=-2.6, FL_MAX=50., border_policy='reflect'):
@@ -535,23 +537,30 @@ class HeterogeneousTruncatedLevyWalk(StochasticWalk):
         
         StochasticWalk.__init__(self, nr_nodes, dimensions, height, FL_DISTR, VELOCITY_DISTR, WT_DISTR=WT_DISTR, border_policy=border_policy)
         
+
 def random_waypoint(*args, **kwargs):
     return iter(RandomWaypoint(*args, **kwargs))
+
 
 def stochastic_walk(*args, **kwargs):
     return iter(StochasticWalk(*args, **kwargs))
 
+
 def random_walk(*args, **kwargs):
     return iter(RandomWalk(*args, **kwargs))
+
 
 def random_direction(*args, **kwargs):
     return iter(RandomDirection(*args, **kwargs))
 
+
 def truncated_levy_walk(*args, **kwargs):
     return iter(TruncatedLevyWalk(*args, **kwargs))
 
+
 def heterogeneous_truncated_levy_walk(*args, **kwargs):
     return iter(HeterogeneousTruncatedLevyWalk(*args, **kwargs))
+
 
 def gauss_markov(nr_nodes, dimensions, height=1.5, velocity_mean=1., alpha=1., variance=1.):
     '''
@@ -830,6 +839,7 @@ def reference_point_group(nr_nodes, dimensions, height=1.5, velocity=(0.1, 1.), 
 
         yield np.dstack((x,y,z,velocity))[0]
         
+
 def tvc(nr_nodes, dimensions, height=1.5, velocity=(0.1, 1.), aggregation=[0.1,1.], epoch=[100,100], border_policy='wrap'):
     '''
     Time-variant Community Mobility Model, discussed in the paper

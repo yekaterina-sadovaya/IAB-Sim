@@ -6,6 +6,10 @@ import pickle
 
 
 def combine_metrics(link_scheduler, tic, TPT, delay, num_active_UE, number_of_hops_DL):
+    """
+    Updates and gather statistics
+    """
+
     if tic % 1000 == 0 and gl.print_Flag is True:
         print('Time: ' + str(st.simulation_time_s) + '; Tic: ' + str(tic))
         if link_scheduler.active_ues['DL']:
@@ -38,6 +42,9 @@ def combine_metrics(link_scheduler, tic, TPT, delay, num_active_UE, number_of_ho
 
 
 def save_data(per_packet_throughput, packet_delay, num_active_UEs, number_of_hops_DL):
+    """
+    Saves calculation results
+    """
 
     print('saving data...')
 
@@ -81,6 +88,10 @@ def save_data(per_packet_throughput, packet_delay, num_active_UEs, number_of_hop
 
 
 def calc_throughput(link_scheduler):
+    """
+    Computes mean throughput for all packets
+    """
+
     THP_av = []
     for i in st.actual_throughput[link_scheduler.current_state]:
         if st.actual_throughput[link_scheduler.current_state][i].any():

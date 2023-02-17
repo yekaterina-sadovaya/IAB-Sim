@@ -11,6 +11,12 @@ from math import log10, floor
 
 
 class TopologyCreator:
+    """
+    This class stores topological parameters
+    and has methods to establish associations,
+    update links' quality information
+    """
+
     def __init__(self, BERs):
         self.bs_positions = np.vstack((gl.DgNB_pos, gl.IAB_pos))
         self.DgNB_IAB_distances = np.linalg.norm(self.bs_positions[0, :] - self.bs_positions[1:, :], axis=1)

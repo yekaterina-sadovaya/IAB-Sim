@@ -9,8 +9,8 @@ import numpy as np
 
 N_BS = gl.n_IAB + 1
 
-# TBS for Ninfo <= 3824 is defined in Table 5.1.3.2-1 of TS 38.214
-# STABLE VERSION?
+TBS_SIZE_DEF = 8448
+
 TBS_for_less_than_3824 = np.linspace(24, 192, 22)
 TBS_for_less_than_3824 = np.append(TBS_for_less_than_3824, np.linspace(208, 384, 12))
 TBS_for_less_than_3824 = np.append(TBS_for_less_than_3824, np.linspace(408, 576, 8))
@@ -20,6 +20,10 @@ TBS_for_less_than_3824 = np.append(TBS_for_less_than_3824, np.array([2976, 3104,
 
 
 def packetize_data(LOG_DIR):
+    """
+    Converts data flow from traffic model to
+    integer number of packets
+    """
     st.active_UEs[LOG_DIR] = []
     for id_of_UE in range(0, gl.n_UEs):
         number_of_packets = st.ue_associated_traffic_bytes[LOG_DIR][id_of_UE, 0] / gl.packet_size_bytes
@@ -65,6 +69,11 @@ def packetize_data(LOG_DIR):
 
 
 def det_block_size(DIR, ue_num, node_name):
+    """
+    Transport block size determination according
+    to 3GPP
+    """
+
     N_info = st.N_info[node_name][DIR][ue_num]
     if N_info > 0:
         if N_info <= 3824:
@@ -95,6 +104,15 @@ def det_block_size(DIR, ue_num, node_name):
 
 
 def deliver_packet_FTP(DIR, ue_in_TTI, pkt_id, OFDM_params, TTI):
+    """
+    Simulates packet transmission for FRP traffic,
+    computes packet parameters
+    :param DIR: Logical direction (UL or DL)
+    :param ue_in_TTI: UE number
+    :param pkt_id: packet number
+    :param OFDM_params: OFDM parameters class
+    """
+
     if st.packet_traffic[DIR][ue_in_TTI][pkt_id].current_hop != \
             st.packet_traffic[DIR][ue_in_TTI][pkt_id].destination:
 
@@ -135,14 +153,14 @@ def deliver_packet_FTP(DIR, ue_in_TTI, pkt_id, OFDM_params, TTI):
 
             st.packets_counter[DIR][ue_in_TTI] = 0
 
-        # if bits_transmitted >= gl.MAX_CB_size_bits:
-        #     st.actual_throughput[DIR][ue_in_TTI] = np.append(st.actual_throughput[DIR][ue_in_TTI],
-        #                                                      bits_transmitted/delay)
-
         del st.packet_traffic[DIR][ue_in_TTI][pkt_id]
 
 
 def deliver_packet_FB(DIR, ue_in_TTI, pkt_id, OFDM_params, node_name, TTI, scheduled_direction, LINK):
+    """
+    Simulates packet transmission for full-buffer traffic,
+    computes packet parameters
+    """
 
     st.packet_traffic[node_name][LINK][DIR][ue_in_TTI][pkt_id].hops_number = \
         st.packet_traffic[node_name][LINK][DIR][ue_in_TTI][pkt_id].hops_number + 1
@@ -190,6 +208,10 @@ def deliver_packet_FB(DIR, ue_in_TTI, pkt_id, OFDM_params, node_name, TTI, sched
 
 
 def calc_phy_throughput_FB():
+    """
+    Computes physical throughput for the
+    full-buffer traffic
+    """
 
     for ue_number in range(0, gl.n_UEs):
 
@@ -204,7 +226,15 @@ def calc_phy_throughput_FB():
         print('UE throughput ' + str(st.perceived_throughput['DL'][ue_number] / 1e6) + ' Mbps')
 
 
-def transmit_blocks(link_scheduler, packet_scheduler, OFDM_params, BERs):
+def transmit_blocks(link_scheduler, packet_scheduler, OFDM_params, BLERs):
+    """
+    Block transmission
+    :param link_scheduler: link scheduler class
+    :param packet_scheduler: packet scheduler class
+    :param OFDM_params: OFDM parameters class
+    :param BLERs: BLER curves
+    """
+
     time_fraction_number = link_scheduler.current_state
 
     for node_name in st.node_names:
@@ -221,9 +251,7 @@ def transmit_blocks(link_scheduler, packet_scheduler, OFDM_params, BERs):
                 for ue_in_TTI in UEs_in_TTI:
 
                     st.packet_traffic[node_name][LINK][DIR][ue_in_TTI].sort(key=lambda x: x.arrival_time, reverse=False)
-
                     transport_block_size = det_block_size(DIR, ue_in_TTI, node_name)
-                    # st.TBS[DIR] = np.append(st.TBS[DIR], transport_block_size)
                     max_codeblock_size_bits = gl.max_codeblock_size_bytes * 8
                     codeblocks_in_TB = transport_block_size / max_codeblock_size_bits
                     if codeblocks_in_TB < 1:
@@ -261,7 +289,7 @@ def transmit_blocks(link_scheduler, packet_scheduler, OFDM_params, BERs):
                                 outcome = 0
                             else:
 
-                                BLER = BERs[MCS_ID](st.current_rsrp[node_name][DIR][ue_in_TTI])
+                                BLER = BLERs[MCS_ID](st.current_rsrp[node_name][DIR][ue_in_TTI])
 
                                 if BLER[0] > 1:
                                     outcome = 0
@@ -338,20 +366,6 @@ def transmit_blocks(link_scheduler, packet_scheduler, OFDM_params, BERs):
                             mean_delay = np.mean(st.per_packet_delay_per_TTI[DIR][ue_in_TTI])
                             st.mean_throughput[DIR] = np.append(st.mean_throughput[DIR], bits_per_tti / mean_delay)
                             st.mean_delay[DIR] = np.append(st.mean_delay[DIR], mean_delay)
-                            # st.mean_throughput[DIR] = np.append(st.mean_throughput[DIR], np.mean(st.actual_throughput[DIR][ue_in_TTI]))
-                            # if gl.scheduler == 'PF':
-                            #     st.past_throughput[DIR][ue_in_TTI] = np.append(st.past_throughput[DIR][ue_in_TTI],
-                            #                                                    bits_per_tti / mean_delay)
 
                         st.actual_throughput[DIR][ue_in_TTI] = np.array([])
                         st.per_packet_delay_per_TTI[DIR][ue_in_TTI] = np.array([])
-
-
-def calc_thr_per_subframe(DIR):
-    thr_per_subfr = np.array([])
-    for ue in range(0, gl.n_UEs):
-        if st.bits_tr[DIR][ue] != 0:
-            thr_per_subfr_per_ue = st.bits_tr[DIR][ue] / gl.FRAME_DURATION_S
-            thr_per_subfr = np.append(thr_per_subfr, thr_per_subfr_per_ue)
-            st.bits_tr[DIR][ue] = 0
-    return thr_per_subfr

@@ -15,7 +15,7 @@ class PackingParams:
 
 
 class TDataPacket:
-    """IP layer data packet (the ones we are delivering). We are interested in statistics of those"""
+    """ Packet class (the ones we are delivering) """
     _seq = itertools.count()
 
     def __init__(self, source: int, destination: int, size_bytes: int, seq: int = None, current_hop: int = None,
