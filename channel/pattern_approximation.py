@@ -8,6 +8,9 @@ plt.style.use('seaborn')
 from scipy import interpolate
 import pickle
 
+# This script computes and saves antenna pattern with given configurations
+# to save time for re-computing it during simulations
+
 N_elements = 16
 filename = str(N_elements)+'x' + str(N_elements) + '.pickle'
 

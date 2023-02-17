@@ -78,3 +78,18 @@ def save_data(per_packet_throughput, packet_delay, num_active_UEs, number_of_hop
         with open('res_' + frame_coeff + '_' + str(gl.FTP_parameter_lambda_UL) + '_' +
                   str(gl.FTP_parameter_lambda_DL) + '_' + str(gl.SIM_SEED) + '.pickle', 'wb') as handle:
             pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+def calc_throughput(link_scheduler):
+    THP_av = []
+    for i in st.actual_throughput[link_scheduler.current_state]:
+        if st.actual_throughput[link_scheduler.current_state][i].any():
+
+            N = st.actual_throughput[link_scheduler.current_state][i].size
+            per_packet_tp = np.sum(st.actual_throughput[link_scheduler.current_state][i])/N
+            st.actual_throughput[link_scheduler.current_state][i] = per_packet_tp
+            THP_av.append(st.actual_throughput[link_scheduler.current_state][i])
+
+    if THP_av:
+        st.mean_throughput[link_scheduler.current_state] = np.append(st.mean_throughput[link_scheduler.current_state],
+                                                                     np.mean(THP_av))

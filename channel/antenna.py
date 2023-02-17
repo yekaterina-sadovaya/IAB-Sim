@@ -11,6 +11,13 @@ d_v = d_h
 
 
 def calculate_3gpp_antenna(aoa_az, aoa_el, N):
+    """
+    3GPP antenna implementation
+    :param aoa_az: angle of arrival in azimuth plane
+    :param aoa_el: angle of arrival in elevation plane
+    :param N: number of antenna elements
+    :return: directional gain value
+    """
     N_hor = N
     N_vert = N
     # element pattern of each antenna elements
@@ -39,6 +46,9 @@ def calculate_3gpp_antenna(aoa_az, aoa_el, N):
 
 
 def antenna3gpp(N_ant):
+    """
+    Opens pre-calculated pattern
+    """
     filename = 'channel/' + str(N_ant) + 'x' + str(N_ant) + '.pickle'
     with open(filename, 'rb') as handle:
         interpolating_function = pickle.load(handle)
@@ -47,6 +57,14 @@ def antenna3gpp(N_ant):
 
 
 def attenuation_in_direction(phi_i, theta_i, ang_3db):
+    """
+    Calculates attenuation for a uniform beam
+    :param phi_i: angle of arrival in azimuth plane
+    :param theta_i: angle of arrival in elevation plane
+    :param ang_3db: HPBW
+    :return: attenuation in this direction
+    """
+
     SLh = 20
     SLv = 20
     SL = 30
@@ -55,21 +73,6 @@ def attenuation_in_direction(phi_i, theta_i, ang_3db):
     A_ev = -min(12 * ((theta_i / ang_3db) ** 2), SLv)
 
     return 15-min(-(A_eh + A_ev), SL)
-
-
-def beam_split(active_ues):
-    if len(active_ues) >= 8:
-        gl.IAB_tx_power_dBm = 23.9794
-        gl.DgNB_tx_power_dBm = 33.9794
-    elif 8 > len(active_ues) >= 6:
-        gl.DgNB_tx_power_dBm = 35.2287874528
-        gl.IAB_tx_power_dBm = 25.2287874528
-    elif 6 > len(active_ues) >= 4:
-        gl.DgNB_tx_power_dBm = 36.9897
-        gl.IAB_tx_power_dBm = 26.9897
-    else:
-        gl.DgNB_tx_power_dBm = 40
-        gl.IAB_tx_power_dBm = 30
 
 
 if __name__ == "__main__":

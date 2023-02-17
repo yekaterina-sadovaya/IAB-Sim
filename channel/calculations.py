@@ -1,7 +1,7 @@
 import numpy as np
 import copy
 
-from library.stuff import cart2sph
+from library.additional_functions import cart2sph
 from channel.propagation import MP_Propagation_Model, UMa_LoS, antenna3gpp
 from channel.channel_config import MP_chan_params_Cluster
 from gl_vars import gl
@@ -10,24 +10,27 @@ ch_params = MP_chan_params_Cluster()
 antenna_downtilt_rad = gl.antenna_downtilt_deg*np.pi/180
 
 
-def calc_transmission(txs, rx, distances, blockage, Nant_tx: int, Nant_rx: int):
+def calc_transmission(tx, rx, distances, blockage, Nant_tx: int, Nant_rx: int):
+    """
+    Computes PL for different channels and
+    weights MPCs via using the antenna pattern
+    :param tx: Tx coordinate
+    :param rx: Rx coordinate
+    :param blockage: if link is blocked
+    :param Nant_tx: number of antenna elements of Tx antenna
+    :param Nant_rx: number of antenna elements of Rx antenna
+    """
 
-    class MainTransmission:
-        def __init__(self):
-            self.tx_main_directions = []
-            self.rx_main_directions = []
-
-    main_transmission = MainTransmission()
-    if type(txs) is list:
-        s = txs.__len__()
-    elif type(txs) is np.ndarray:
-        s = txs.shape[0]
+    if type(tx) is list:
+        s = tx.__len__()
+    elif type(tx) is np.ndarray:
+        s = tx.shape[0]
     else:
         raise TypeError
 
     PL = np.zeros(s)
     PL_average = np.zeros(s)
-    for tx_index, tx_i in enumerate(txs):
+    for tx_index, tx_i in enumerate(tx):
         min_distance = distances[tx_index]
         is_blocked = blockage[tx_index]
 
@@ -36,13 +39,11 @@ def calc_transmission(txs, rx, distances, blockage, Nant_tx: int, Nant_rx: int):
         azimuth_angle_tx, zenith_angle_tx, r = cart2sph(transmitting_direction[0], transmitting_direction[1],
                                                       transmitting_direction[2])
         tx_ant = [azimuth_angle_tx, zenith_angle_tx]
-        main_transmission.tx_main_directions.append(tx_ant)
 
         azimuth_angle_rx, zenith_angle_rx, r = cart2sph(-transmitting_direction[0], -transmitting_direction[1],
                                                    transmitting_direction[2])
 
         rx_ant = [azimuth_angle_rx, zenith_angle_rx]
-        main_transmission.rx_main_directions.append(rx_ant)
 
         if gl.PL_calculation_option == 'cluster':
             ch_prop_model = MP_Propagation_Model(ch_params, Nant_tx, Nant_rx)

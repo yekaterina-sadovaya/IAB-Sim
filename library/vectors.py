@@ -46,4 +46,13 @@ def vector_project(v: np.ndarray, p: np.ndarray) -> np.ndarray:
     return p * np.dot(p, v) / (norm(p) ** 2)
 
 
+def insert_zero_coefficients(s_np_zero_elemnts, vector_1, vector_2):
+
+    if len(s_np_zero_elemnts) != 0:
+        for zero_index in s_np_zero_elemnts:
+            vector_1 = np.insert(vector_1, 0, zero_index)
+            vector_2 = np.insert(vector_2, 0, zero_index)
+
+    return vector_1, vector_2
+
 

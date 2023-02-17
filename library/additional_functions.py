@@ -40,6 +40,10 @@ def RATIO2DB(x):
 
 
 def cart2sph(x, y, z):
+    """
+    Convert Cartesian coordinates into shperical
+    :return: azimuth and elevation angles, radius
+    """
     hxy = np.hypot(x, y)
     r = np.hypot(hxy, z)
     el = np.arctan2(z, hxy)
@@ -85,19 +89,4 @@ def friis_range(path_loss_dB: Union[np.ndarray, float], frequency_Hz: float, n: 
     :param n: propagation constant (normally 2)
     """
     return speed_of_light / (np.power(DB2RATIO(-np.abs(path_loss_dB)), 1 / n) * 4 * pi * frequency_Hz)
-
-
-def dic_parse(s: str, sep1: str = ' ', sep2: str = '_'):
-    """Parse a string of form "A_4.3 B_3 C_0" into a python dictionary.
-     No conversions are made to the values, i.e. the mapping is str to str. """
-    d = {}
-    try:
-        fields = s.split(sep1)
-        for f in fields:
-            if f:
-                n, v = f.split(sep2)
-                d[n] = v
-    finally:
-        return d
-
 

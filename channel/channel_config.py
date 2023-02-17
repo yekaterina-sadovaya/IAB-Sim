@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.constants import speed_of_light
-from library.stuff import friis_path_loss_dB
+from library.additional_functions import friis_path_loss_dB
 
 
 class MP_chan_params(object):
