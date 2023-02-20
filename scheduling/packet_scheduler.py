@@ -50,13 +50,16 @@ def RoundRobin_metric(active_ues, time_fraction_number, node_name):
     return active_ues
 
 
-def PF_metric(active_ues, symb_total, time_fraction_number, node_name):
+def PF_metric(active_ues, symb_total, time_fraction_number, node_name,
+              alpha=0.01, betta=1):
     """
     Computes PF metric
     :param active_ues: UEs, which have traffic in their buffers
     :param symb_total: number of available symbols
     :param time_fraction_number: frame part number
     :param node_name: number (id) of IAB node or donor
+    :param alpha: prioritization coefficient
+    :param betta: prioritization coefficient
     :return: re-ordered list of users
     """
 
@@ -78,9 +81,8 @@ def PF_metric(active_ues, symb_total, time_fraction_number, node_name):
             if np.any(st.past_throughput[DIR][ue]):
                 st.past_throughput[DIR][ue] = \
                     np.mean(st.past_throughput[DIR][ue])
-                # estimated_throughput = st.current_rsrp[link_scheduler.current_state][ue]
-                PF_metric = np.append(PF_metric,
-                                      estimated_throughput / st.past_throughput[DIR][ue])
+                m = (estimated_throughput**alpha) / (st.past_throughput[DIR][ue]**betta)
+                PF_metric = np.append(PF_metric, m)
             else:
                 PF_metric = np.append(PF_metric, 1)
 
@@ -89,7 +91,8 @@ def PF_metric(active_ues, symb_total, time_fraction_number, node_name):
     return active_ues, transmitted_bits_estimate
 
 
-def WPF_metric(active_ues, symb_total, time_fraction_number, node_name, coefficient_eps):
+def WPF_metric(active_ues, symb_total, time_fraction_number, node_name, coefficient_eps,
+               alpha=0.01, betta=1):
     """
     WPF is used in a combination with optimization,
     PF metric is scaled by the optimal coefficients
@@ -119,7 +122,7 @@ def WPF_metric(active_ues, symb_total, time_fraction_number, node_name, coeffici
                 if gl.traffic_type == 'FTP':
                     st.past_throughput[DIR][ue] = \
                         np.mean(st.past_throughput[DIR][ue])
-                WPF_i = estimated_throughput / st.past_throughput[DIR][ue]
+                WPF_i = (estimated_throughput**alpha) / (st.past_throughput[DIR][ue]**betta)
                 WPF_i = WPF_i * weight
                 WPF_metric = np.append(WPF_metric, WPF_i)
             else:
@@ -130,7 +133,7 @@ def WPF_metric(active_ues, symb_total, time_fraction_number, node_name, coeffici
     return active_ues
 
 
-def WQF_metric(active_ues, coefficient_eps, time_fraction_number, node_name):
+def WFQ_metric(active_ues, coefficient_eps, time_fraction_number, node_name):
     """
     WFQ is used in a combination with optimization,
     RR metric is scaled by the optimal coefficients
@@ -202,7 +205,7 @@ class Scheduler:
             elif gl.scheduler == 'PF':
                 active_ues, bits_estimate = PF_metric(active_ues, symbols_total, time_fraction_number, node_name)
             elif gl.scheduler == 'WFQ':
-                active_ues = WQF_metric(active_ues, C, time_fraction_number, node_name)
+                active_ues = WFQ_metric(active_ues, C, time_fraction_number, node_name)
             elif gl.scheduler == 'WPF':
                 active_ues = WPF_metric(active_ues, symbols_total, time_fraction_number, node_name, C)
             else:
