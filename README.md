@@ -11,7 +11,7 @@ All system parameters are configured withing the global variables class located 
 
 The frame patter in this framework is assumed to be split in 4 parts:
 
-![alt text](/docs/configurations_opt.png)
+![alt text](./docs/configurations_opt.png)
 
 The duration of these intervals is optimized together with the individual UEs allocations. 
 While the frame division coefficients are used explicitly in the simulator to determine
