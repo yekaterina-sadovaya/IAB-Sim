@@ -1,4 +1,4 @@
-from stat_container import st
+from library.stat_container import st
 from gl_vars import gl
 
 import numpy as np

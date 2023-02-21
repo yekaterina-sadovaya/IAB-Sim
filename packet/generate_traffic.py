@@ -1,7 +1,7 @@
 from gl_vars import gl
 import numpy as np
 import matplotlib.pyplot as plt
-from stat_container import st
+from library.stat_container import st
 
 
 def ftp3_traffic(LOG_DIR, tic, seed):

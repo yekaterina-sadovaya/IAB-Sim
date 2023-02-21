@@ -1,8 +1,8 @@
 from mobility.configure_mobility import set_mobility_model
 from gl_vars import gl
-from stat_container import st
+from library.stat_container import st
 from packet.generate_traffic import ftp3_traffic
-from topology_formation import TopologyCreator
+from library.topology_formation import TopologyCreator
 from packet.packets_operations import packetize_data, transmit_blocks, calc_phy_throughput_FB
 from phy.abstractions import set_params_OFDM
 from scheduling.link_scheduler import LinkScheduler, LinkSchedulerOptimal

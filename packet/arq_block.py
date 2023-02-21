@@ -1,5 +1,5 @@
 from gl_vars import gl
-from stat_container import st
+from library.stat_container import st
 
 from math import floor
 

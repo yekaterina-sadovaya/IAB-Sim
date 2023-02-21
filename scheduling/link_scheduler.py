@@ -1,5 +1,5 @@
 from gl_vars import gl
-from stat_container import st
+from library.stat_container import st
 from phy.bercurve import set_params_PHY
 from fb_optimization.optimization import Optimization, OptimizationParams
 from library.vectors import insert_zero_coefficients

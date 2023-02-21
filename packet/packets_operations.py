@@ -1,5 +1,5 @@
 from packet.form_packets import TDataPacket
-from stat_container import st
+from library.stat_container import st
 from gl_vars import gl
 from packet.arq_block import ARQ_block
 

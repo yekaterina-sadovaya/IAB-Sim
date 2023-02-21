@@ -1,5 +1,5 @@
 from gl_vars import gl
-from stat_container import st
+from library.stat_container import st
 from channel.calculations import calc_transmission
 from channel.propagation import time_blocked
 from phy.bercurve import set_params_PHY

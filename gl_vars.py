@@ -31,14 +31,14 @@ class GL_container_class:
                                                         # do not use with multihop_flag = True
         self.traffic_type = 'full'                           # choose from 'FTP' or 'full'
 
-        # ------------------------Scheluling and Optimization--------------------------------
-        self.frame_division_policy = 'PF'              # available: '50/50', 'PF', 'OPT'
+        # ------------------------Scheduling and Optimization--------------------------------
+        self.frame_division_policy = 'OPT'              # available: '50/50', 'PF', 'OPT'
 
         self.use_average = True                         # if this flag is enable, average values
                                                         # of spectral efficiencies will be used in the fb_optimization
                                                         # if disable, instant variables will be used
         self.optimization_type = 'MAXMIN'               # choose fb_optimization: 'MAXMIN' or 'PF'
-        self.scheduler = 'PF'                          # PF, RR, WFQ, WPF
+        self.scheduler = 'WFQ'                          # PF, RR, WFQ, WPF
                                                         # PF and RR are non-parametrized schedulers
                                                         # (use without fb_optimization)
                                                         # WPF and WFQ use coefficients from the fb_optimization
