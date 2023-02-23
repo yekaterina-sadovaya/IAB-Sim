@@ -109,10 +109,12 @@ class TopologyCreator:
                 st.closest_bs_indices[i, j - 1] = best_path['UL'][1]
                 st.closest_bs_distances[i, j - 1] = np.linalg.norm(ue_pos - self.bs_positions[best_path['UL'][1], 0:3])
 
-                st.UE_blockage_condition[i, 2 * j - 1] = time_blocked(st.UE_blockage_condition[i, j - 1],
-                                                                      gl.blockers_density,
-                                                                      st.closest_bs_distances[i, j - 1],
-                                                                      gl.UE_average_speed)
+                if gl.blockage is True:
+                    st.UE_blockage_condition[i, 2 * j - 1] = time_blocked(st.UE_blockage_condition[i, j - 1],
+                                                                          gl.blockers_density,
+                                                                          st.closest_bs_distances[i, j - 1],
+                                                                          gl.UE_average_speed)
+
                 if st.closest_bs_indices[i, j - 1] == 0:
                     p_tx = gl.DgNB_tx_power_dBm
                     n_ant = gl.N_antenna_elements_DgNB

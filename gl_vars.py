@@ -48,8 +48,9 @@ class GL_container_class:
         self.PL_calculation_option = 'simple'           # has 2 options: "simple" and "cluster"
                                                         # by "simple" it is assumed that only PL formula is used
         self.shadow_fading = True                       # turn this on to enable SF for the simple PL calculations
+        self.blockage = True                            # flag to enable (True) or disable (False) blockage
+        self.blockers_density = 0.5                     # density of blockers per square meter
         self.loss_from_blockage_dB = 20
-        self.blockers_density = 0.0001                  # density of blockers per square meter
 
         # ------------------------Physical parameters of UEs and nodes/DgNB-----------------
         self.thermal_noise_density = -173.93
@@ -61,7 +62,7 @@ class GL_container_class:
         self.N_antenna_elements_UE = 4
         self.antenna_downtilt_deg = 3
         self.UE_tx_power_dBm = 23
-        self.DgNB_tx_power_dBm = 40
+        self.DgNB_tx_power_dBm = 30
         self.IAB_tx_power_dBm = 30
 
         # ------------------------Packet transmission parameters-----------------------------

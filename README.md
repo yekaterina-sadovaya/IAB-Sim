@@ -30,9 +30,9 @@ which UEs should transmit over the backhaul links.
 
 As it was mentioned, optimization is solved for the full buffer traffic. Therefore, the following parameters should be configured
 in the simulator to correspond to the optimization assumptions.
-First, to enable optimization, switch frame_division_policy = 'OPT'.
-Then, switch traffic type to full-buffer, i.e., choose traffic_type = 'full' (this is needed due to different throughput calculations) 
-and set the burst size (burst_size_bytes) to a large value, which will not be transmitted in the configured time interval.
+First, to enable optimization, switch **frame_division_policy = 'OPT'**.
+Then, switch traffic type to full-buffer, i.e., choose **traffic_type = 'full'** (this is needed due to different throughput calculations) 
+and set the burst size (**burst_size_bytes**) to a **large** value, which will not be transmitted in the configured time interval.
 
 #### Simulations without optimal allocations
 
@@ -69,3 +69,46 @@ configured for the correct work of the optimization framework.
 the algorithm will try to maximize the minimum achievable rate among UEs and equalize the rates for all UEs.
 - There are two basic schedulers implemented: round robin and proportional fair. To use them without optimal coefficients, switch the scheduler 
 parameter to 'PF' or 'RR'. To compliment the scheduler with the optimal coefficients choose between the 'WFQ' or 'WPF'.
+
+#### Channel calculation and blockage
+
+This set of parameters is responsible for channel configuration: channel_update_periodicity_tics sets the frequency of channel updates (if mobility is
+disabled, one can put a large value while for fast-moving UEs this value should be small), PL_calculation_option allows choosing the 
+channel model (option 'simple' uses just PL formulas while 'cluster' uses the 3GPP cluster channel model to generate
+multipath components), shadow_fading is the flag enabling/disabling the addition of fading component used for the simple channel model,
+blockers_density dictates the density of blockers per square meter. More details on the blockage model can be found in [1].
+To enable link blockage, put blockage to True, loss_from_blockage_dB tells the signal attenuation due to blockage.
+
+**!Note** that the impact of blockage might not be visible on the results of the optimization because optimization is solved at t=0 and links might 
+not be blocked at this time, link blockage occurs further as the process in time and degrades the performance of the optimal allocations.
+Also, ensure that the simulation time is large enough so that the tossed blockage time is achieved. 
+
+#### Physical parameters of UEs and nodes/DgNB
+
+Set up here such parameters as transmit power, noise figure, interference margin, and the number of antenna 
+elements.
+
+#### Packet transmission parameters 
+
+The sizes of packet and burst. As it was mentioned previously,
+the burst size for full-buffer traffic should be set to a large number, which will not be transmitted.
+
+#### UE mobility configurations
+
+Choose a mobility pattern from 3 possible options: stable (no mobility), random direction mobility (RDM), and reference point group mobility(RPGM).
+Set up minimum and average speeds in m/s.
+
+#### OFDM-related parameters
+
+Chose the numerology number, frame duration is by default 10 ms (but it can be changed in the simulator if needed),
+and target BLER.
+
+#### Printing, Plotting, and Saving
+
+Flags for plotting deployment and optimization results as well as printing the simulation process.  
+
+
+
+[1] M. Gapeyenko, A. Samuylov, M. Gerasimenko, D. Moltchanov, S. Singh, M. R. Akdeniz, E. Aryafar, N. Himayat, S. Andreev, and
+Y. Koucheryavy, “On the temporal effects of mobile blockers in urban millimeter-wave cellular scenarios,” IEEE Transactions on Vehicular
+Technology, vol. 66, no. 11, pp. 10124–10138, 2017
