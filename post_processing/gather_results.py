@@ -82,8 +82,12 @@ def save_data(per_packet_throughput, packet_delay, num_active_UEs, number_of_hop
         with open('achieved_' + str(gl.SIM_SEED) + '.pickle', 'wb') as handle:
             pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
     else:
-        with open('res_' + frame_coeff + '_' + str(gl.FTP_parameter_lambda_UL) + '_' +
-                  str(gl.FTP_parameter_lambda_DL) + '_' + str(gl.SIM_SEED) + '.pickle', 'wb') as handle:
+        if gl.traffic_type == 'full':
+            file_name = 'res_' + frame_coeff + '_FB_' + str(gl.SIM_SEED) + '.pickle'
+        else:
+            file_name = 'res_' + frame_coeff + '_' + str(gl.FTP_parameter_lambda_UL) + '_' + \
+                        str(gl.FTP_parameter_lambda_DL) + '_' + str(gl.SIM_SEED) + '.pickle'
+        with open(file_name, 'wb') as handle:
             pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
