@@ -119,6 +119,7 @@ def deliver_packet_FTP(DIR, ue_in_TTI, pkt_id, OFDM_params, node_name, TTI, time
 
     if current_hop != st.packet_traffic[node_name][LINK][DIR][ue_in_TTI][pkt_id].destination:
 
+        st.packet_traffic[node_name][LINK][DIR][ue_in_TTI][pkt_id].hops_number += 1
         st.packet_traffic[node_name][LINK][DIR][ue_in_TTI][pkt_id].current_hop = \
             st.backhaul_routes[ue_in_TTI][DIR][st.packet_traffic[node_name][LINK][DIR][ue_in_TTI][pkt_id].hops_number]
 
@@ -126,7 +127,7 @@ def deliver_packet_FTP(DIR, ue_in_TTI, pkt_id, OFDM_params, node_name, TTI, time
 
         st.last_time_served[DIR][ue_in_TTI] = st.simulation_time_s
         st.packet_traffic[node_name][LINK][DIR][ue_in_TTI][pkt_id].service_enter_time = \
-            st.simulation_time_s + ((OFDM_params.RB_time_s / 14) * st.symbols_per_ue[DIR][ue_in_TTI]) * (TTI + 1)
+            st.simulation_time_s + ((OFDM_params.RB_time_s / 14) * st.symbols_per_ue[time_fraction_number]) * (TTI + 1)
         delay = st.packet_traffic[node_name][LINK][DIR][ue_in_TTI][pkt_id].service_enter_time - \
                 st.packet_traffic[node_name][LINK][DIR][ue_in_TTI][pkt_id].arrival_time
         st.per_packet_delay_per_TTI[DIR][ue_in_TTI] = np.append(st.per_packet_delay_per_TTI[DIR][ue_in_TTI], delay)
@@ -358,7 +359,8 @@ def transmit_blocks(link_scheduler, packet_scheduler, OFDM_params, BLERs):
                                                 for ff in fragments_numbers[::-1]:
                                                     del st.fragmented_packets[DIR][ue_in_TTI][ff]
                                                 if gl.traffic_type == 'FTP':
-                                                    deliver_packet_FTP(DIR, ue_in_TTI, pkt_id, OFDM_params, TTI)
+                                                    deliver_packet_FTP(DIR, ue_in_TTI, pkt_id, OFDM_params, node_name,
+                                                                       TTI, time_fraction_number, LINK)
                                                 elif gl.traffic_type == 'full':
                                                     deliver_packet_FB(DIR, ue_in_TTI, pkt_id, OFDM_params, node_name,
                                                                       TTI, time_fraction_number, LINK)

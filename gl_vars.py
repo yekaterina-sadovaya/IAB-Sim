@@ -10,7 +10,7 @@ class GL_container_class:
 
         # ------------------------Generic simulation parameters------------------------
         self.SIM_SEED = 1
-        self.sim_time_tics = 1000                         # 1 tic equals 1 DL or UL interval in a frame
+        self.sim_time_tics = 2000                         # 1 tic equals 1 DL or UL interval in a frame
 
         # ------------------------Deployment configuration----------------------------
         self.carrier_frequency_Hz = 28e9
@@ -21,7 +21,7 @@ class GL_container_class:
         self.DgNB_height = 25                           # height in meters
         self.iab_height = 10
         self.UE_height = 1.5
-        self.FTP_parameter_lambda_DL = 0.1              # traffic intensity in DL
+        self.FTP_parameter_lambda_DL = 1.5              # traffic intensity in DL
         self.FTP_parameter_lambda_UL = 0.5              # traffic intensity in UL
         self.multihop_flag = True                       # if disabled, it is still possible to have 2 hops
                                                         # from UE to donor but it disables
@@ -44,7 +44,7 @@ class GL_container_class:
                                                         # WPF and WFQ use coefficients from the fb_optimization
 
         # ------------------------Channel calculation and blockage---------------------------
-        self.channel_update_periodicity_tics = 5000
+        self.channel_update_periodicity_tics = 500
         self.PL_calculation_option = 'simple'           # has 2 options: "simple" and "cluster"
                                                         # by "simple" it is assumed that only PL formula is used
         self.shadow_fading = True                       # turn this on to enable SF for the simple PL calculations
@@ -66,7 +66,7 @@ class GL_container_class:
         self.IAB_tx_power_dBm = 30
 
         # ------------------------Packet transmission parameters-----------------------------
-        self.burst_size_bytes = 10 * 1.995 * 1e6        # file size for full-buffer traffic should be set
+        self.burst_size_bytes = 10*1.995 * 1e6        # file size for full-buffer traffic should be set
                                                         # to a large number, which will not be all transmitted;
                                                         # for FTP traffic, 1 Mbyte = 1e6 bytes is the standard value
         self.packet_size_bytes = 1053                   # packet size and block size should be put equal

@@ -27,7 +27,7 @@ def combine_metrics(link_scheduler, tic, TPT, delay, num_active_UE, number_of_ho
 
     st.actual_throughput = {'DL': {k: np.array([]) for k in range(gl.n_UEs)},
                             'UL': {k: np.array([]) for k in range(gl.n_UEs)}}
-    if st.simulation_time_s >= 2 and tic % gl.channel_update_periodicity_tics == 0:
+    if st.simulation_time_s >= 1 and tic % gl.channel_update_periodicity_tics == 0:
         TPT['DL'] = np.append(TPT['DL'], st.mean_throughput['DL'])
         TPT['UL'] = np.append(TPT['UL'], st.mean_throughput['UL'])
         delay['DL'] = np.append(delay['DL'], st.mean_delay['DL'])
