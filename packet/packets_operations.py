@@ -103,7 +103,7 @@ def det_block_size(DIR, ue_num, node_name):
     return TBS
 
 
-def deliver_packet_FTP(DIR, ue_in_TTI, pkt_id, OFDM_params, TTI):
+def deliver_packet_FTP(DIR, ue_in_TTI, pkt_id, OFDM_params, node_name, TTI, time_fraction_number, LINK):
     """
     Simulates packet transmission for FRP traffic,
     computes packet parameters
@@ -113,24 +113,28 @@ def deliver_packet_FTP(DIR, ue_in_TTI, pkt_id, OFDM_params, TTI):
     :param OFDM_params: OFDM parameters class
     """
 
-    if st.packet_traffic[DIR][ue_in_TTI][pkt_id].current_hop != \
-            st.packet_traffic[DIR][ue_in_TTI][pkt_id].destination:
+    current_hop_index = st.packet_traffic[node_name][LINK][DIR][ue_in_TTI][pkt_id].hops_number
+    current_hop = st.backhaul_routes[ue_in_TTI][DIR][current_hop_index]
+    st.packet_traffic[node_name][LINK][DIR][ue_in_TTI][pkt_id].current_hop = current_hop
 
-        st.packet_traffic[DIR][ue_in_TTI][pkt_id].current_hop = \
-            st.backhaul_routes[ue_in_TTI][DIR][st.packet_traffic[DIR][ue_in_TTI][pkt_id].hops_number]
+    if current_hop != st.packet_traffic[node_name][LINK][DIR][ue_in_TTI][pkt_id].destination:
+
+        st.packet_traffic[node_name][LINK][DIR][ue_in_TTI][pkt_id].current_hop = \
+            st.backhaul_routes[ue_in_TTI][DIR][st.packet_traffic[node_name][LINK][DIR][ue_in_TTI][pkt_id].hops_number]
 
     else:
+
         st.last_time_served[DIR][ue_in_TTI] = st.simulation_time_s
-        st.packet_traffic[DIR][ue_in_TTI][pkt_id].service_enter_time = \
+        st.packet_traffic[node_name][LINK][DIR][ue_in_TTI][pkt_id].service_enter_time = \
             st.simulation_time_s + ((OFDM_params.RB_time_s / 14) * st.symbols_per_ue[DIR][ue_in_TTI]) * (TTI + 1)
-        delay = st.packet_traffic[DIR][ue_in_TTI][pkt_id].service_enter_time - \
-                st.packet_traffic[DIR][ue_in_TTI][pkt_id].arrival_time
+        delay = st.packet_traffic[node_name][LINK][DIR][ue_in_TTI][pkt_id].service_enter_time - \
+                st.packet_traffic[node_name][LINK][DIR][ue_in_TTI][pkt_id].arrival_time
         st.per_packet_delay_per_TTI[DIR][ue_in_TTI] = np.append(st.per_packet_delay_per_TTI[DIR][ue_in_TTI], delay)
-        bits_transmitted = st.packet_traffic[DIR][ue_in_TTI][pkt_id].size_bytes * 8
-        if st.packet_traffic[DIR][ue_in_TTI][pkt_id].first_in_a_burst:
+        bits_transmitted = st.packet_traffic[node_name][LINK][DIR][ue_in_TTI][pkt_id].size_bytes * 8
+        if st.packet_traffic[node_name][LINK][DIR][ue_in_TTI][pkt_id].first_in_a_burst:
             st.per_packet_time_served_in_burst[DIR][ue_in_TTI] = \
                 np.append(st.per_packet_time_served_in_burst[DIR][ue_in_TTI],
-                          st.packet_traffic[DIR][ue_in_TTI][pkt_id].arrival_time)
+                          st.packet_traffic[node_name][LINK][DIR][ue_in_TTI][pkt_id].arrival_time)
         # calculate throughput before the packet is removed from the buffer
         st.actual_throughput[DIR][ue_in_TTI] = np.append(st.actual_throughput[DIR][ue_in_TTI], bits_transmitted)
         st.packets_counter[DIR][ue_in_TTI] = st.packets_counter[DIR][ue_in_TTI] + 1
@@ -138,10 +142,10 @@ def deliver_packet_FTP(DIR, ue_in_TTI, pkt_id, OFDM_params, TTI):
         st.bits_tr[DIR][ue_in_TTI] = st.bits_tr[DIR][ue_in_TTI] + 8424
 
         # calculate UE perceived throughput for the dynamic traffic
-        if st.packet_traffic[DIR][ue_in_TTI][pkt_id].last_in_a_burst:
+        if st.packet_traffic[node_name][LINK][DIR][ue_in_TTI][pkt_id].last_in_a_burst:
             st.per_packet_time_served_in_burst[DIR][ue_in_TTI] = \
                 np.append(st.per_packet_time_served_in_burst[DIR][ue_in_TTI],
-                          st.packet_traffic[DIR][ue_in_TTI][pkt_id].service_enter_time)
+                          st.packet_traffic[node_name][LINK][DIR][ue_in_TTI][pkt_id].service_enter_time)
             t_del = st.per_packet_time_served_in_burst[DIR][ue_in_TTI][1] - \
                     st.per_packet_time_served_in_burst[DIR][ue_in_TTI][0]
             p_t = (((st.packets_counter[DIR][ue_in_TTI] - 1) * 8424) / t_del)
@@ -153,7 +157,7 @@ def deliver_packet_FTP(DIR, ue_in_TTI, pkt_id, OFDM_params, TTI):
 
             st.packets_counter[DIR][ue_in_TTI] = 0
 
-        del st.packet_traffic[DIR][ue_in_TTI][pkt_id]
+        del st.packet_traffic[node_name][LINK][DIR][ue_in_TTI][pkt_id]
 
 
 def deliver_packet_FB(DIR, ue_in_TTI, pkt_id, OFDM_params, node_name, TTI, scheduled_direction, LINK):
@@ -324,7 +328,8 @@ def transmit_blocks(link_scheduler, packet_scheduler, OFDM_params, BLERs):
                                         # for whole packets, next hop is assigned or they
                                         # are delivered to the destination
                                         if gl.traffic_type == 'FTP':
-                                            deliver_packet_FTP(DIR, ue_in_TTI, pkt_id, OFDM_params, TTI)
+                                            deliver_packet_FTP(DIR, ue_in_TTI, pkt_id, OFDM_params, node_name, TTI,
+                                                               time_fraction_number, LINK)
                                         elif gl.traffic_type == 'full':
                                             deliver_packet_FB(DIR, ue_in_TTI, pkt_id, OFDM_params, node_name, TTI,
                                                               time_fraction_number, LINK)
