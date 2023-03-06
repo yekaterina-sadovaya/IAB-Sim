@@ -20,12 +20,12 @@ plt.style.use(directory + '\\post_processing\\YS_plot_style.mplstyle')
 
 def packet_sim():
     """
-    This functions starts the simulations with
+    This function starts the simulations with
     the configured parameters
     """
 
-    # First, it load all the dependencies and generates the nodes locations, schedulers types,
-    # as well as other parameters, which do not change during the calculations but depend on the setup
+    # First, it loads all dependencies and generates nodes locations, schedulers,
+    # as well as other parameters, which depend on the setup and are not changed during simulation
     BER_CURVES = load_BER()
     drop_DgNB(gl.SIM_SEED)
     drop_IAB(gl.SIM_SEED)
@@ -97,16 +97,16 @@ def packet_sim():
             else:
                 link_scheduler.divide_frame(UE_positions_tr, topology.PL_bw_DgNB_IAB, BER_CURVES)
 
-            # C is the coefficient for each time duration. If fb_optimization is disabled, there are
-            # 2 parts of the frame. If fb_optimization is enabled, there are 4 in general.
-            # Different parts correspond to different link directionality (see docs)
+            # C is the coefficient for the frame split. If fb_optimization is disabled, there are
+            # 2 sub-frames in the frame. If fb_optimization is enabled, there are 4 sub-frames in general.
+            # Different sub-frames correspond to different link directionality (see docs)
             C = link_scheduler.C[link_scheduler.current_state]
             st.simulation_time_tics = tic
 
             if C != 0:
 
                 # This part will assign the direction (UL or DL) to each node,
-                # create schedules, and allocate the resources
+                # create schedules, and allocate resources
                 packet_scheduler.define_allowed_transmissions()
                 packet_scheduler.run_scheduler(link_scheduler, topology, UE_positions_tr)
 
