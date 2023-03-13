@@ -1,7 +1,7 @@
 import warnings
 from math import sqrt, copysign, log
 import numpy as np
-
+from typing import List
 
 def vector_rot90(v):
     """rotates a 3-vector around z axis counter-clockwise"""
@@ -9,7 +9,7 @@ def vector_rot90(v):
     return v
 
 
-def norm(v: np.ndarray) -> [np.ndarray, float]:
+def norm(v: np.ndarray) -> List[np.ndarray, float]:
     return np.sqrt((v * v).sum(axis=0))
 
 
