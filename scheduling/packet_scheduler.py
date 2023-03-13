@@ -2,7 +2,7 @@ from library.stat_container import st
 from gl_vars import gl
 from phy.abstractions import set_params_OFDM
 
-import roundrobin
+# import roundrobin
 import numpy as np
 from math import floor
 
