@@ -281,7 +281,7 @@ class MP_Propagation_Model(object):
     def get_LOS_channel(self, src_position, dst_position):
         """Obtains LoS path"""
 
-        dv = dst_position - src_position
+        dv = np.array(dst_position - src_position)
         lamb = speed_of_light / self.params.carrier
         dist = norm(dv)
 

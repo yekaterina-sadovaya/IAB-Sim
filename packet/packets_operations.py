@@ -249,7 +249,7 @@ def transmit_blocks(link_scheduler, packet_scheduler, OFDM_params, BLERs):
 
         if DIR:
 
-            current_schd = packet_scheduler.schedules[node_name][DIR]
+            current_schd = packet_scheduler.trps[node_name][DIR].schedule
 
             for TTI, UEs_in_TTI in enumerate(current_schd):
 

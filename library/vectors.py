@@ -9,7 +9,7 @@ def vector_rot90(v):
     return v
 
 
-def norm(v: np.ndarray) -> List[np.ndarray, float]:
+def norm(v):
     return np.sqrt((v * v).sum(axis=0))
 
 

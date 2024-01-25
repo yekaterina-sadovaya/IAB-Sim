@@ -1,7 +1,7 @@
 import csv
 from scipy import interpolate
 import matplotlib.pyplot as plt
-import pickle5 as pickle
+import pickle
 import numpy as np
 
 N_MCS = 29

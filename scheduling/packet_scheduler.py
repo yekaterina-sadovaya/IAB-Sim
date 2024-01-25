@@ -1,6 +1,6 @@
 from library.stat_container import st
 from gl_vars import gl
-from phy.abstractions import set_params_OFDM
+from phy.abstractions import set_params_OFDM, comp_power_params
 
 # import roundrobin
 import numpy as np
@@ -168,13 +168,26 @@ def WFQ_metric(active_ues, coefficient_eps, time_fraction_number, node_name):
     return active_ues
 
 
+class serving_node:
+    def __init__(self, node_id, dir):
+        self.node_id = node_id
+        self.log_dir = dir
+        self.schedule = []
+        self.sleep_mode = 'active'
+        self.transition_time = 0
+        self.total_slots_transmitted = 1
+        self.total_slots_slept = 1
+        self.fraction = self.total_slots_slept/self.total_slots_transmitted
+
+
 class Scheduler:
     """
     Scheduler class
     """
     def __init__(self):
-        self.schedules = {'I' + str(k1): {'DL': [], 'UL': []} for k1 in range(1, gl.n_IAB + 1)}
-        self.schedules['D'] = {'DL': [], 'UL': []}
+        self.trps = {'I' + str(k1): {'DL': serving_node('I' + str(k1), 'DL'),
+                                     'UL': serving_node('I' + str(k1), 'UL')} for k1 in range(1, gl.n_IAB + 1)}
+        self.trps['D'] = {'DL': serving_node('D', 'DL'), 'UL': serving_node('D', 'UL')}
 
     def run_scheduler(self, link_scheduler, topology, UE_positions):
 
@@ -192,7 +205,7 @@ class Scheduler:
         # empty schedules first
         for node_name in st.node_names:
             DIR = st.allowed_transmissions[time_fraction_number][node_name]
-            self.schedules[node_name][DIR] = []
+            self.trps[node_name][DIR].schedule = []
 
             active_ues = link_scheduler.active_ues[DIR]
             time_slots_total = (C * gl.FRAME_DURATION_S) / OFDM_params.RB_time_s
@@ -211,7 +224,7 @@ class Scheduler:
             else:
                 raise ValueError
 
-            if len(active_ues) != 0:
+            if (len(active_ues) != 0) and self.trps[node_name][DIR].sleep_mode == 'active':
 
                 for ue_to_schedule in active_ues:
 
@@ -219,11 +232,14 @@ class Scheduler:
                         LINK = 'AC'
                         st.allowed_links[time_fraction_number][node_name] = LINK
                         IfTraffic = len(st.packet_traffic[node_name][LINK][DIR][ue_to_schedule]) != 0
-                        if IfTraffic and len(self.schedules[node_name][DIR]) == 0:
-                            self.schedules[node_name][DIR] = [[ue_to_schedule]]
+                        if IfTraffic:
+                            self.trps[node_name][DIR].schedule = [[ue_to_schedule]]
+                            self.trps[node_name][DIR].total_slots_transmitted = self.trps[node_name][DIR].total_slots_transmitted + 1
+                        else:
+                            self.enter_sleep_mode(IfTraffic, node_name, DIR)
 
                     else:
-                        if len(self.schedules[node_name][DIR]) == 0:
+                        if len(self.trps[node_name][DIR].schedule) == 0:
                             if st.BH_counter[time_fraction_number][0] > 0:
                                 proportion_BH =\
                                     st.BH_counter[time_fraction_number][1]/st.BH_counter[time_fraction_number][0]
@@ -248,20 +264,46 @@ class Scheduler:
                                 st.allowed_links[time_fraction_number][node_name] = LINK
                                 IfTraffic = len(st.packet_traffic[node_name][LINK][DIR][ue_to_schedule]) != 0
                                 if IfTraffic:
-                                    self.schedules[node_name][DIR] = [[ue_to_schedule]]
+                                    self.trps[node_name][DIR].schedule = [[ue_to_schedule]]
                                     if node_name == 'D':
                                         st.BH_counter[time_fraction_number][1] = st.BH_counter[time_fraction_number][1] + 1
                                         st.BH_counter[time_fraction_number][0] = st.BH_counter[time_fraction_number][0] + 1
+                                else:
+                                    self.enter_sleep_mode(IfTraffic, node_name, DIR)
 
                             else:
                                 LINK = 'AC'
                                 st.allowed_links[time_fraction_number][node_name] = LINK
                                 IfTraffic = len(st.packet_traffic[node_name][LINK][DIR][ue_to_schedule]) != 0
                                 if IfTraffic:
-                                    self.schedules[node_name][DIR] = [[ue_to_schedule]]
+                                    self.trps[node_name][DIR].schedule = [[ue_to_schedule]]
                                     if node_name == 'D':
                                         st.BH_counter[time_fraction_number][2] = st.BH_counter[time_fraction_number][2] + 1
                                         st.BH_counter[time_fraction_number][0] = st.BH_counter[time_fraction_number][0] + 1
+                                else:
+                                    self.enter_sleep_mode(IfTraffic, node_name, DIR)
+
+    def enter_sleep_mode(self, IfTraffic, node_name, DIR):
+        if (IfTraffic is False) and self.trps[node_name][DIR].sleep_mode != 'active':
+            # transit to active mode
+            self.trps[node_name][DIR].transition_time = self.trps[node_name][DIR].transition_time - OFDM_params.RB_time_s
+            if self.trps[node_name][DIR].transition_time <= 0:
+                self.trps[node_name][DIR].sleep_mode = 'active'
+                self.trps[node_name][DIR].transition_time = 0
+            else:
+                self.trps[node_name][DIR].total_slots_slept = self.trps[node_name][DIR].total_slots_slept + 1
+        else:
+            rt = self.trps[node_name][DIR].total_slots_slept/self.trps[node_name][DIR].total_slots_transmitted
+            if (rt > 0) and (self.trps[node_name][DIR].sleep_mode == 'micro'):
+                sleep_mode = 'light'
+            elif (rt > 0) and (self.trps[node_name][DIR].sleep_mode == 'light'):
+                sleep_mode = 'deep'
+            else:
+                sleep_mode = 'micro'
+            self.trps[node_name][DIR].sleep_mode = sleep_mode
+            P1, E1, T1 = comp_power_params(self.trps[node_name][DIR].sleep_mode)
+            self.trps[node_name][DIR].transition_time = T1
+            self.trps[node_name][DIR].total_slots_slept = self.trps[node_name][DIR].total_slots_slept + 1
 
     def allocate_resources(self, link_scheduler, current_slot_fraction, topology, UE_positions):
 

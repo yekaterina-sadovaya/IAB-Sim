@@ -29,10 +29,10 @@ class GL_container_class:
         self.ue_associations = 'best_rsrp_maxmin'       # min_hops, best_rsrp_maxmin, rand
         self.multi_con_degree = 1                       # 1 or 2 (splits traffic from UEs to multiple nodes)
                                                         # do not use with multihop_flag = True
-        self.traffic_type = 'full'                      # choose from 'FTP' or 'full'
+        self.traffic_type = 'FTP'                      # choose from 'FTP' or 'full'
 
         # ------------------------Scheduling and Optimization--------------------------------
-        self.frame_division_policy = 'OPT'              # available: '50/50', 'PF', 'OPT'
+        self.frame_division_policy = '50/50'              # available: '50/50', 'PF', 'OPT'
 
         self.use_average = True                         # if this flag is enable, average values
                                                         # of spectral efficiencies will be used in the fb_optimization
