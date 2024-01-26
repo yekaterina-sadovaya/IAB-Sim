@@ -25,3 +25,13 @@ def set_params_OFDM(numerology):
         return params[numerology]
     except KeyError:
         return params[0]
+
+
+def comp_power_params(sleep_mode):
+    # returns P1, E1, T1
+    if sleep_mode == 'deep':
+        return 1, 1000, 50e-3
+    elif sleep_mode == 'light':
+        return 25, 90, 6e-3
+    elif sleep_mode == 'micro':
+        return 38, 0, 0

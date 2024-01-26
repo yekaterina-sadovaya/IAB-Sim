@@ -109,5 +109,8 @@ class STAT_container_class:
 
         self.time_transmitted = {'D':np.zeros([gl.n_UEs, 4]),'I1':np.zeros([gl.n_UEs,4])}
 
+        self.scheduling_stats = {'DL':[], 'UL':[]}
+        self.status_stats = {'DL':[], 'UL':[]}
+
 
 st = STAT_container_class()

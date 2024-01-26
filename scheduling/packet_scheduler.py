@@ -44,7 +44,8 @@ def RoundRobin_metric(active_ues, time_fraction_number, node_name):
             else:
                 RR_metric = np.append(RR_metric, current_time)
 
-        ids = np.argsort(RR_metric)[::-1]
+        ids = np.argsort(RR_metric) #[::-1]
+        # ids = np.argsort(RR_metric)
         active_ues = [active_ues[i] for i in ids]
 
     return active_ues
@@ -86,7 +87,7 @@ def PF_metric(active_ues, symb_total, time_fraction_number, node_name,
             else:
                 PF_metric = np.append(PF_metric, 1)
 
-        ids = np.argsort(PF_metric)[::-1]
+        ids = np.argsort(PF_metric) #[::-1]
         active_ues = [active_ues[i] for i in ids]
     return active_ues, transmitted_bits_estimate
 
@@ -128,7 +129,7 @@ def WPF_metric(active_ues, symb_total, time_fraction_number, node_name, coeffici
             else:
                 WPF_metric = np.append(WPF_metric, 1e8)
 
-        ids = np.argsort(WPF_metric)[::-1]
+        ids = np.argsort(WPF_metric)    #[::-1]
         active_ues = [active_ues[i] for i in ids]
     return active_ues
 
@@ -162,7 +163,7 @@ def WFQ_metric(active_ues, coefficient_eps, time_fraction_number, node_name):
                 WFQ_metric = np.append(WFQ_metric, 1e8)
                 # WFQ_metric = np.append(WFQ_metric, current_time*weight)
 
-        ids = np.argsort(WFQ_metric)[::-1]
+        ids = np.argsort(WFQ_metric)    #[::-1]
         active_ues = [active_ues[i] for i in ids]
 
     return active_ues
@@ -191,13 +192,14 @@ class Scheduler:
 
     def run_scheduler(self, link_scheduler, topology, UE_positions):
 
-        if np.any(link_scheduler.active_ues['DL']) or np.any(link_scheduler.active_ues['UL']):
+        # if np.any(link_scheduler.active_ues['DL']) or np.any(link_scheduler.active_ues['UL']):
 
-            current_slot_fraction = link_scheduler.current_state
-            C = link_scheduler.C[current_slot_fraction]
-            if gl.frame_division_policy == 'OPT':
-                self.BH_coefficients = link_scheduler.DgNB_OPT_BH_coefficients
-            self.create_schedules(link_scheduler, C, current_slot_fraction)
+        current_slot_fraction = link_scheduler.current_state
+        C = link_scheduler.C[current_slot_fraction]
+        if gl.frame_division_policy == 'OPT':
+            self.BH_coefficients = link_scheduler.DgNB_OPT_BH_coefficients
+        self.create_schedules(link_scheduler, C, current_slot_fraction)
+        if np.any(link_scheduler.active_ues['DL']) or np.any(link_scheduler.active_ues['UL']):
             self.allocate_resources(link_scheduler, current_slot_fraction, topology, UE_positions)
 
     def create_schedules(self, link_scheduler, C, time_fraction_number):
@@ -224,8 +226,9 @@ class Scheduler:
             else:
                 raise ValueError
 
-            if (len(active_ues) != 0) and self.trps[node_name][DIR].sleep_mode == 'active':
+            if len(active_ues) != 0:
 
+                LINK = 'AC'
                 for ue_to_schedule in active_ues:
 
                     if time_fraction_number == 2 or time_fraction_number == 3:
@@ -235,66 +238,79 @@ class Scheduler:
                         if IfTraffic:
                             self.trps[node_name][DIR].schedule = [[ue_to_schedule]]
                             self.trps[node_name][DIR].total_slots_transmitted = self.trps[node_name][DIR].total_slots_transmitted + 1
-                        else:
-                            self.enter_sleep_mode(IfTraffic, node_name, DIR)
 
                     else:
-                        if len(self.trps[node_name][DIR].schedule) == 0:
-                            if st.BH_counter[time_fraction_number][0] > 0:
-                                proportion_BH =\
-                                    st.BH_counter[time_fraction_number][1]/st.BH_counter[time_fraction_number][0]
-                            else:
-                                proportion_BH = 0
+                        # if len(self.trps[node_name][DIR].schedule) == 0:
+                        if (st.BH_counter[time_fraction_number][0] > 0):
+                            proportion_BH =\
+                                st.BH_counter[time_fraction_number][1]/st.BH_counter[time_fraction_number][0]
+                        else:
+                            proportion_BH = 0
 
-                            if gl.frame_division_policy == 'OPT':
-                                fraction_BH = self.BH_coefficients[time_fraction_number -
-                                                                   1]/link_scheduler.C[time_fraction_number]
-                                Cs = link_scheduler.C[time_fraction_number]
-                                Ns = st.symbols_per_ue[time_fraction_number]
-                                Cs_sim = Ns/14
-                                difference = (Cs_sim - Cs)/Cs
-                            else:
-                                fraction_BH = 0.5
+                        if gl.frame_division_policy == 'OPT':
+                            fraction_BH = self.BH_coefficients[time_fraction_number -
+                                                               1]/link_scheduler.C[time_fraction_number]
+                            Cs = link_scheduler.C[time_fraction_number]
+                            Ns = st.symbols_per_ue[time_fraction_number]
+                            Cs_sim = Ns/14
+                            difference = (Cs_sim - Cs)/Cs
+                        else:
+                            fraction_BH = 0.5
 
-                            if proportion_BH < fraction_BH: #+difference+0.15:    # np.sum(self.BH_coefficients)
-                                if node_name == 'D':
-                                    LINK = 'BH'
-                                else:
-                                    LINK = 'AC'
-                                st.allowed_links[time_fraction_number][node_name] = LINK
-                                IfTraffic = len(st.packet_traffic[node_name][LINK][DIR][ue_to_schedule]) != 0
-                                if IfTraffic:
-                                    self.trps[node_name][DIR].schedule = [[ue_to_schedule]]
-                                    if node_name == 'D':
-                                        st.BH_counter[time_fraction_number][1] = st.BH_counter[time_fraction_number][1] + 1
-                                        st.BH_counter[time_fraction_number][0] = st.BH_counter[time_fraction_number][0] + 1
-                                else:
-                                    self.enter_sleep_mode(IfTraffic, node_name, DIR)
-
+                        if proportion_BH < fraction_BH:
+                            if (node_name == 'D') and gl.n_IAB > 0:
+                                LINK = 'BH'
                             else:
                                 LINK = 'AC'
-                                st.allowed_links[time_fraction_number][node_name] = LINK
-                                IfTraffic = len(st.packet_traffic[node_name][LINK][DIR][ue_to_schedule]) != 0
-                                if IfTraffic:
-                                    self.trps[node_name][DIR].schedule = [[ue_to_schedule]]
-                                    if node_name == 'D':
-                                        st.BH_counter[time_fraction_number][2] = st.BH_counter[time_fraction_number][2] + 1
-                                        st.BH_counter[time_fraction_number][0] = st.BH_counter[time_fraction_number][0] + 1
-                                else:
-                                    self.enter_sleep_mode(IfTraffic, node_name, DIR)
+                            st.allowed_links[time_fraction_number][node_name] = LINK
+                            if node_name == 'D':
+                                st.BH_counter[time_fraction_number][1] = st.BH_counter[time_fraction_number][1] + 1
+                                st.BH_counter[time_fraction_number][0] = st.BH_counter[time_fraction_number][0] + 1
+                            IfTraffic = len(st.packet_traffic[node_name][LINK][DIR][ue_to_schedule]) != 0
+                            if IfTraffic:
+                                self.trps[node_name][DIR].schedule = [[ue_to_schedule]]
 
-    def enter_sleep_mode(self, IfTraffic, node_name, DIR):
-        if (IfTraffic is False) and self.trps[node_name][DIR].sleep_mode != 'active':
+                        else:
+                            LINK = 'AC'
+                            st.allowed_links[time_fraction_number][node_name] = LINK
+                            IfTraffic = len(st.packet_traffic[node_name][LINK][DIR][ue_to_schedule]) != 0
+                            if IfTraffic:
+                                self.trps[node_name][DIR].schedule = [[ue_to_schedule]]
+                                if node_name == 'D':
+                                    st.BH_counter[time_fraction_number][2] = st.BH_counter[time_fraction_number][2] + 1
+                                    st.BH_counter[time_fraction_number][0] = st.BH_counter[time_fraction_number][0] + 1
+
+            self.enter_sleep_mode(node_name, DIR)
+            st.status_stats[DIR].append(self.trps[node_name][DIR].sleep_mode)
+
+    def enter_sleep_mode(self, node_name, DIR):
+        IfTraffic = False
+        if len(self.trps[node_name][DIR].schedule) > 0:
+            ue_to_schedule = self.trps[node_name][DIR].schedule[0][0]
+            IfTraffic_AC = len(st.packet_traffic[node_name]['AC'][DIR][ue_to_schedule]) != 0
+            IfTraffic_BH = len(st.packet_traffic[node_name]['BH'][DIR][ue_to_schedule]) != 0
+            IfTraffic = IfTraffic_AC is True or IfTraffic_BH is True
+        # collect statistics for verification
+        if IfTraffic is True:
+            st.scheduling_stats[DIR].append(1)
+        else:
+            st.scheduling_stats[DIR].append(0)
+        if IfTraffic is True:
             # transit to active mode
-            self.trps[node_name][DIR].transition_time = self.trps[node_name][DIR].transition_time - OFDM_params.RB_time_s
-            if self.trps[node_name][DIR].transition_time <= 0:
-                self.trps[node_name][DIR].sleep_mode = 'active'
-                self.trps[node_name][DIR].transition_time = 0
+            if self.trps[node_name][DIR].sleep_mode != 'active':
+                self.trps[node_name][DIR].transition_time = self.trps[node_name][DIR].transition_time - OFDM_params.RB_time_s
+                if self.trps[node_name][DIR].transition_time <= 0:
+                    self.trps[node_name][DIR].sleep_mode = 'active'
+                    self.trps[node_name][DIR].transition_time = 0
+                else:
+                    self.trps[node_name][DIR].total_slots_slept = self.trps[node_name][DIR].total_slots_slept + 1
             else:
-                self.trps[node_name][DIR].total_slots_slept = self.trps[node_name][DIR].total_slots_slept + 1
+                self.trps[node_name][DIR].total_slots_transmitted = self.trps[node_name][DIR].total_slots_transmitted + 1
         else:
             rt = self.trps[node_name][DIR].total_slots_slept/self.trps[node_name][DIR].total_slots_transmitted
-            if (rt > 0) and (self.trps[node_name][DIR].sleep_mode == 'micro'):
+            if (rt > 0) and (self.trps[node_name][DIR].sleep_mode == 'deep'):
+                sleep_mode = 'deep'
+            elif (rt > 0) and (self.trps[node_name][DIR].sleep_mode == 'micro'):
                 sleep_mode = 'light'
             elif (rt > 0) and (self.trps[node_name][DIR].sleep_mode == 'light'):
                 sleep_mode = 'deep'

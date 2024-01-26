@@ -76,10 +76,12 @@ def packet_sim():
                 UE_positions_IAB = UE_positions_tr[indices2, :]
                 plt.plot(UE_positions_DgNB[:, 0], UE_positions_DgNB[:, 1], 'o', label='UEs connected to DgNB',
                          markersize=5, color='k')
-                plt.plot(UE_positions_IAB[:, 0], UE_positions_IAB[:, 1], 'o', label='UEs connected to IAB',
-                         markersize=5, color='b')
+                if len(UE_positions_IAB) > 0:
+                    plt.plot(UE_positions_IAB[:, 0], UE_positions_IAB[:, 1], 'o', label='UEs connected to IAB',
+                             markersize=5, color='b')
                 plt.plot(gl.DgNB_pos[:, 0], gl.DgNB_pos[:, 1], 'o', label='DgNB', markersize=10)
-                plt.plot(gl.IAB_pos[:, 0], gl.IAB_pos[:, 1], '^', label='IAB node', markersize=10)
+                if gl.n_IAB > 0:
+                    plt.plot(gl.IAB_pos[:, 0], gl.IAB_pos[:, 1], '^', label='IAB node', markersize=10)
                 plt.legend()
                 plt.xlabel('x, m')
                 plt.ylabel('y, m')
@@ -144,6 +146,9 @@ def packet_sim():
     if gl.traffic_type == 'full':
         calc_phy_throughput_FB()
 
+    plt.figure()
+    plt.plot(st.scheduling_stats['DL'])
+    plt.show()
     save_data(per_packet_throughput, packet_delay, num_active_UEs, number_of_hops_DL)
 
 
