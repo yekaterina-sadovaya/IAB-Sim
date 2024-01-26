@@ -280,10 +280,9 @@ class Scheduler:
                                     st.BH_counter[time_fraction_number][2] = st.BH_counter[time_fraction_number][2] + 1
                                     st.BH_counter[time_fraction_number][0] = st.BH_counter[time_fraction_number][0] + 1
 
-            self.enter_sleep_mode(node_name, DIR)
-            st.status_stats[DIR].append(self.trps[node_name][DIR].sleep_mode)
+            self.enter_sleep_mode(node_name, DIR, time_slots_total)
 
-    def enter_sleep_mode(self, node_name, DIR):
+    def enter_sleep_mode(self, node_name, DIR, slots_num):
         IfTraffic = False
         if len(self.trps[node_name][DIR].schedule) > 0:
             ue_to_schedule = self.trps[node_name][DIR].schedule[0][0]
@@ -298,10 +297,17 @@ class Scheduler:
         if IfTraffic is True:
             # transit to active mode
             if self.trps[node_name][DIR].sleep_mode != 'active':
-                self.trps[node_name][DIR].transition_time = self.trps[node_name][DIR].transition_time - OFDM_params.RB_time_s
+                self.trps[node_name][DIR].transition_time = self.trps[node_name][DIR].transition_time - OFDM_params.RB_time_s*slots_num
                 if self.trps[node_name][DIR].transition_time <= 0:
-                    self.trps[node_name][DIR].sleep_mode = 'active'
-                    self.trps[node_name][DIR].transition_time = 0
+                    if self.trps[node_name][DIR].sleep_mode == 'micro':
+                        self.trps[node_name][DIR].sleep_mode = 'active'
+                    elif self.trps[node_name][DIR].sleep_mode == 'light':
+                        self.trps[node_name][DIR].sleep_mode = 'micro'
+                    elif self.trps[node_name][DIR].sleep_mode == 'deep':
+                        self.trps[node_name][DIR].sleep_mode = 'light'
+                        P1, E1, T1 = comp_power_params(self.trps[node_name][DIR].sleep_mode)
+                        self.trps[node_name][DIR].transition_time = T1
+                    self.trps[node_name][DIR].total_slots_transmitted = self.trps[node_name][DIR].total_slots_transmitted + 1
                 else:
                     self.trps[node_name][DIR].total_slots_slept = self.trps[node_name][DIR].total_slots_slept + 1
             else:
@@ -320,6 +326,7 @@ class Scheduler:
             P1, E1, T1 = comp_power_params(self.trps[node_name][DIR].sleep_mode)
             self.trps[node_name][DIR].transition_time = T1
             self.trps[node_name][DIR].total_slots_slept = self.trps[node_name][DIR].total_slots_slept + 1
+        st.status_stats[DIR].append(self.trps[node_name][DIR].sleep_mode)
 
     def allocate_resources(self, link_scheduler, current_slot_fraction, topology, UE_positions):
 

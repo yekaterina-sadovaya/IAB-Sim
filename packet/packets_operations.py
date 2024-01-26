@@ -247,7 +247,7 @@ def transmit_blocks(link_scheduler, packet_scheduler, OFDM_params, BLERs):
         DIR = st.allowed_transmissions[time_fraction_number][node_name]
         LINK = st.allowed_links[time_fraction_number][node_name]
 
-        if DIR:
+        if DIR and (packet_scheduler.trps[node_name][DIR].sleep_mode == 'active'):
 
             current_schd = packet_scheduler.trps[node_name][DIR].schedule
 

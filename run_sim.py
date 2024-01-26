@@ -147,7 +147,25 @@ def packet_sim():
         calc_phy_throughput_FB()
 
     plt.figure()
-    plt.plot(st.scheduling_stats['DL'])
+    x = np.linspace(0, st.simulation_time_s, len(st.scheduling_stats['DL']))
+    plt.plot(x, st.scheduling_stats['DL'])
+    plt.xlabel('time, s')
+    plt.ylabel('UE transmission')
+    plt.figure()
+    status = st.status_stats['DL']
+    y = np.zeros(len(status))
+    for n, s in enumerate(status):
+        if s == 'active':
+            y[n] = 0
+        elif s == 'micro':
+            y[n] = 1
+        elif s == 'light':
+            y[n] = 2
+        elif s == 'deep':
+            y[n] = 3
+    plt.plot(x, y)
+    plt.xlabel('time, s')
+    plt.ylabel('BS status')
     plt.show()
     save_data(per_packet_throughput, packet_delay, num_active_UEs, number_of_hops_DL)
 
