@@ -314,17 +314,29 @@ class Scheduler:
                 self.trps[node_name][DIR].total_slots_transmitted = self.trps[node_name][DIR].total_slots_transmitted + 1
         else:
             rt = self.trps[node_name][DIR].total_slots_slept/self.trps[node_name][DIR].total_slots_transmitted
-            if (rt > 0) and (self.trps[node_name][DIR].sleep_mode == 'deep'):
-                sleep_mode = 'deep'
-            elif (rt > 0) and (self.trps[node_name][DIR].sleep_mode == 'micro'):
-                sleep_mode = 'light'
-            elif (rt > 0) and (self.trps[node_name][DIR].sleep_mode == 'light'):
-                sleep_mode = 'deep'
+            self.trps[node_name][DIR].transition_time = self.trps[node_name][DIR].transition_time - OFDM_params.RB_time_s*slots_num
+            if self.trps[node_name][DIR].transition_time <= 0:
+                if (rt > 0) and (self.trps[node_name][DIR].sleep_mode == 'deep'):
+                    sleep_mode = 'deep'
+                    P1, E1, T1 = comp_power_params(sleep_mode)
+                    self.trps[node_name][DIR].transition_time = T1
+                elif (rt > 0) and (self.trps[node_name][DIR].sleep_mode == 'micro'):
+                    sleep_mode = 'light'
+                    P1, E1, T1 = comp_power_params(sleep_mode)
+                    self.trps[node_name][DIR].transition_time = T1
+                elif (rt > 0) and (self.trps[node_name][DIR].sleep_mode == 'light'):
+                    sleep_mode = 'deep'
+                    P1, E1, T1 = comp_power_params(sleep_mode)
+                    self.trps[node_name][DIR].transition_time = T1
+                else:
+                    sleep_mode = 'micro'
+                    P1, E1, T1 = comp_power_params(sleep_mode)
+                    self.trps[node_name][DIR].transition_time = T1
             else:
-                sleep_mode = 'micro'
+                sleep_mode = self.trps[node_name][DIR].sleep_mode
+
             self.trps[node_name][DIR].sleep_mode = sleep_mode
-            P1, E1, T1 = comp_power_params(self.trps[node_name][DIR].sleep_mode)
-            self.trps[node_name][DIR].transition_time = T1
+
             self.trps[node_name][DIR].total_slots_slept = self.trps[node_name][DIR].total_slots_slept + 1
         st.status_stats[DIR].append(self.trps[node_name][DIR].sleep_mode)
 
